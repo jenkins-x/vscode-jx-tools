@@ -16,13 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
     // The commandId parameter must match the command field in package.json
-    let disposableHello = vscode.commands.registerCommand('extension.sayHello', () => {
-        // The code you place here will be executed every time your command is executed
-
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World!');
-    });
-
     let disposableActivity = vscode.commands.registerCommand('extension.watchActivity', () => {
 
         //let kc = k8s.Config.defaultClient();
@@ -38,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
         let watch = new k8s.Watch(kc);
         let req = watch.watch('/apis/jenkins.io/v1/namespaces/jx/pipelineactivities',
             // optional query parameters can go here.
+            // TODO filter on labels once we add them to Activities
             {},
             // callback is called for each received object.
             (type: any, obj: any) => {
@@ -47,12 +41,33 @@ export function activate(context: vscode.ExtensionContext) {
                     console.log('changed object:');
                 } else if (type === 'DELETED') {
                     console.log('deleted object:');
+                    return;
                 } else {
                     console.log('unknown type: ' + type);
                 }
                 let repoName = obj.metadata.name;
-
+                if (!obj.spec.steps){
+                    return;
+                }
                 console.log(obj);
+
+                if (!vscode.workspace.workspaceFolders){
+                    return;
+                }
+
+                // TODO lets remove this once we can use lables in the watch selector
+                // until then lets filer out activities we don't want here
+                let match = false;
+                for (let ws of vscode.workspace.workspaceFolders) {
+                    if( repoName.indexOf(ws.name) >= 0){
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match){
+                    return;
+                }
+
                 for (let step of obj.spec.steps) {
                     switch(step.kind) { 
                         case 'stage': { 
@@ -64,7 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
                             vscode.window.showInformationMessage(repoName + ': promoted to '+ step.promote.environment);
                             console.log(repoName + ': promoted to '+ step.promote.environment);
                             break; 
-                        } 
+                        }
                         default: { 
                             //statements; 
                             break; 
@@ -78,13 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
                     console.log(err);
                 }
             });
-        
-        // watch returns a request object which you can use to abort the watch.
-        // setTimeout(() => { req.abort(); }, 10 * 1000);
-        
     });
-
-    context.subscriptions.push(disposableHello);
     context.subscriptions.push(disposableActivity);
 }
 
