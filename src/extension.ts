@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         let watch = new k8s.Watch(kc);
-        let req = watch.watch('/apis/jenkins.io/v1/namespaces/jx/pipelineactivities',
+        watch.watch('/apis/jenkins.io/v1/namespaces/jx/pipelineactivities',
             // optional query parameters can go here.
             // TODO filter on labels once we add them to Activities
             {},

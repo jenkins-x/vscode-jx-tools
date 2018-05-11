@@ -1,9 +1,11 @@
 {
     "name": "vscode-jx-tools",
-    "displayName": "vscode-jx-tools",
+    "displayName": "jx-tools",
     "description": "Jenkins X extension for Visual Studio Code",
     "version": "0.0.1",
-    "publisher": "jenkins-x",
+    "license": "Apache-2.0",
+    "publisher": "jenkinsxio",
+    "preview": true,
     "engines": {
         "vscode": "^1.23.0"
     },
@@ -37,6 +39,17 @@
         "@types/mocha": "^2.2.42"
     },
     "dependencies": {
-        "@kubernetes/client-node": "^0.3.0"
+        "@kubernetes/client-node": "^0.3.0",
+        "vsce": "^1.40.0"
+    },
+    "keywords": [
+        "kubernetes",
+        "k8s",
+        "jenkins-x",
+        "cicd"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/jenkins-x/vscode-jx-tools.git"
     }
 }

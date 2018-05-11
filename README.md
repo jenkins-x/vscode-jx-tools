@@ -22,8 +22,8 @@ Now in the new VSCode open up a workspace that maps to a running jx app.
 
 Activate the watch activities by opening up the VSCode palette `cmd` + `shift` + `p`, type `jx watch activities` and the extension command will be activated.  
 
-![debug](./images/activate.png)
+![debug](https://raw.githubusercontent.com/jenkins-x/vscode-jx-tools/b9c3bc1/images/activate.png)
 
 In the first VScode with the extension workspace you should see logging in the debug console.
 
-![debug](./images/debug.png)
+![debug](https://raw.githubusercontent.com/jenkins-x/vscode-jx-tools/b9c3bc1/images/debug.png)
