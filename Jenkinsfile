@@ -28,10 +28,7 @@ pipeline {
             sh "git checkout master"
             sh "git config --global credential.helper store"
 
-            // so we can retrieve the version in later steps
-            sh "echo \$(jx-release-version) > VERSION"
-            sh 'sed -i -e "s/\"version\": \".*/\"version\": \"\$(cat VERSION)\",/" package.json'
-            sh "jx step tag --version \$(cat VERSION)"
+            sh "jx step next-version --filename package.json --tag"
 
             sh "npm install"
             sh "npm test"
