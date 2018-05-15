@@ -13,9 +13,11 @@ pipeline {
         steps {
           
           container('nodejs') {
+            sh "/usr/bin/Xvfb :99 -screen 0 1280x1024x24 &"
+
             sh "npm install"
-            // unable to get vscode running in CI yet
-            // sh "npm test"
+            sh "npm run postinstall"
+            sh "npm test"
 
             sh "vsce package"
           }
@@ -32,12 +34,12 @@ pipeline {
             sh "git config --global credential.helper store"
 
             sh "jx step next-version --filename package.json --tag"
+            sh "/usr/bin/Xvfb :99 -screen 0 1280x1024x24 &"
 
             sh "npm install"
-            input "ok?"
-            // unable to get vscode running in CI yet
-            // sh "npm test"
-            
+            sh "npm run postinstall"
+            sh "npm test"
+
             sh "vsce publish -p $VISUALSTUDIO_CREDS_PSW"
           }
         }
