@@ -76,8 +76,8 @@ export function activate(context: vscode.ExtensionContext) {
                             break; 
                         } 
                         case 'Promote': { 
-                            vscode.window.showInformationMessage(repoName + ': promoted to '+ step.promote.environment);
-                            console.log(repoName + ': promoted to '+ step.promote.environment);
+                            vscode.window.showInformationMessage(repoName + ': promoted to '+ step.promote.environment  + ". Access application [here](" + step.promote.applicationURL + ")");
+                            console.log(repoName + ': promoted to '+ step.promote.environment + ". Access application " + step.promote.applicationURL);
                             break; 
                         }
                         default: { 
