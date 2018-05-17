@@ -27,7 +27,17 @@
             },
             {
                 "command": "PipelineExplorer.openPipelineResource",
-                "title": "jx Open Resource",
+                "title": "View Pipeline",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.openPipelineLogURL",
+                "title": "Open Pipeline Log",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.openRepositoryURL",
+                "title": "Open Repository URL",
                 "category": "Jenkins X"
             }
         ],
@@ -42,14 +52,32 @@
         "menus": {
             "view/item/context": [
                 {
-                    "command": "PipelineExplorer.openPipelineResource",
-                    "when": "view == extension.vsJenkinsXExplorer",
+                    "command": "PipelineExplorer.openPipelineLogURL",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
                     "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openRepositoryURL",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
+                    "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openPipelineResource",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
+                    "group": "2"
                 }
             ],
             "commandPalette": [
                 {
                     "command": "PipelineExplorer.openPipelineResource",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.openRepositoryURL",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.openPipelineLogURL",
                     "when": "view == extension.vsJenkinsXExplorer"
                 }
             ]

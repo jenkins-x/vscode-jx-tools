@@ -9,6 +9,7 @@ interface ModelNode {
     readonly isDirectory: boolean;
     readonly label: string;
     readonly title: string;
+    readonly contextValue: string;
 
     getChildren(): ModelNode[];
 
@@ -40,6 +41,10 @@ export class BuildNode implements ModelNode {
     get label(): string {
         return this.buildNumber;
     }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.build";
+    }
 }
 
 
@@ -63,6 +68,10 @@ export class RepoNode implements ModelNode {
 
     get label(): string {
         return this.repoName;
+    }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.repo";
     }
 
     parent(): ModelNode {
@@ -136,6 +145,10 @@ export class OwnerNode implements ModelNode {
         return this.folder;
     }
 
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.owner";
+    }
+
     parent(): ModelNode {
         return this.model;
     }
@@ -202,6 +215,10 @@ export class PipelineModel implements ModelNode {
 
     get label(): string {
         return "Pipelines";
+    }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines";
     }
 
     getNodeChildren(element?: ModelNode): ModelNode[] {
@@ -321,6 +338,7 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
         return {
             label: element.label,
             resourceUri: element.resource,
+            contextValue: element.contextValue,
             collapsibleState: element.isDirectory ? TreeItemCollapsibleState.Collapsed : void 0,
             command: element.isDirectory ? void 0 : {
                 command: 'PipelineExplorer.openFtpResource',
@@ -361,11 +379,37 @@ export class PipelineExplorer {
             vscode.window.registerTreeDataProvider('extension.vsJenkinsXExplorer', this.treeProvider),
 
             vscode.commands.registerCommand('PipelineExplorer.refresh', () => this.treeProvider.refresh()),
+            vscode.commands.registerCommand('PipelineExplorer.openPipelineLogURL', resource => this.openPipelineLogURL(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.openRepositoryURL', resource => this.openRepositoryURL(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPipelineResource', resource => this.openResource(resource)),
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
         ];
     }
 //    private openResource(resource?: vscode.Uri): void {
+
+    private openPipelineLogURL(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    openUrl(spec.buildLogsUrl);
+                }    
+            }
+        }
+    }
+
+    private openRepositoryURL(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    openUrl(spec.gitUrl);
+                }    
+            }
+        }
+    }
 
     private openResource(resource: any): void {
         if (!resource) {
@@ -392,6 +436,12 @@ export class PipelineExplorer {
         return null;
     }
 
+}
+
+function openUrl(u?: string): void {
+    if (u) {
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(u));
+    }
 }
 
 /*
