@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 
 const k8s = require('@kubernetes/client-node');
 
+import { PipelineExplorer } from './PipelineExplorer';
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -23,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
         let configFile = process.env['HOME'] + '/.kube/config';
         try {
             kc.loadFromFile(configFile);
-        } catch(e) {
+        } catch (e) {
             console.log('error reading ' + configFile + ': ' + e.message);
             throw e;
         }
@@ -46,12 +48,12 @@ export function activate(context: vscode.ExtensionContext) {
                     console.log('unknown type: ' + type);
                 }
                 let repoName = obj.metadata.name;
-                if (!obj.spec.steps){
+                if (!obj.spec.steps) {
                     return;
                 }
                 console.log(obj);
 
-                if (!vscode.workspace.workspaceFolders){
+                if (!vscode.workspace.workspaceFolders) {
                     return;
                 }
 
@@ -59,31 +61,31 @@ export function activate(context: vscode.ExtensionContext) {
                 // until then lets filer out activities we don't want here
                 let match = false;
                 for (let ws of vscode.workspace.workspaceFolders) {
-                    if( repoName.indexOf(ws.name) >= 0){
+                    if (repoName.indexOf(ws.name) >= 0) {
                         match = true;
                         break;
                     }
                 }
-                if (!match){
+                if (!match) {
                     return;
                 }
 
                 for (let step of obj.spec.steps) {
-                    switch(step.kind) { 
-                        case 'stage': { 
+                    switch (step.kind) {
+                        case 'stage': {
                             vscode.window.showInformationMessage(repoName + ': ' + step.stage.name);
                             console.log(repoName + ': ' + step.stage.name);
-                            break; 
-                        } 
-                        case 'Promote': { 
-                            vscode.window.showInformationMessage(repoName + ': promoted to '+ step.promote.environment  + ". Access application [here](" + step.promote.applicationURL + ")");
-                            console.log(repoName + ': promoted to '+ step.promote.environment + ". Access application " + step.promote.applicationURL);
-                            break; 
+                            break;
                         }
-                        default: { 
+                        case 'Promote': {
+                            vscode.window.showInformationMessage(repoName + ': promoted to ' + step.promote.environment + ". Access application [here](" + step.promote.applicationURL + ")");
+                            console.log(repoName + ': promoted to ' + step.promote.environment + ". Access application " + step.promote.applicationURL);
+                            break;
+                        }
+                        default: {
                             //statements; 
-                            break; 
-                        } 
+                            break;
+                        }
                     }
                 }
             },
@@ -95,6 +97,12 @@ export function activate(context: vscode.ExtensionContext) {
             });
     });
     context.subscriptions.push(disposableActivity);
+
+    // add the Tree viewer
+    let subscriptions = new PipelineExplorer().subscribe(context);
+    subscriptions.forEach((element) => {
+        context.subscriptions.push(element);
+    });
 }
 
 // this method is called when your extension is deactivated
