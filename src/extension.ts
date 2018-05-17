@@ -46,6 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 } else {
                     console.log('unknown type: ' + type);
+                    return;
                 }
                 let repoName = obj.metadata.name;
                 if (!obj.spec.steps) {
@@ -70,21 +71,40 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
 
+                if (obj.spec.status === 'Succeeded' || obj.spec.status === 'Aborted') {
+                    return;
+                }
                 for (let step of obj.spec.steps) {
                     switch (step.kind) {
                         case 'stage': {
-                            vscode.window.showInformationMessage(repoName + ': ' + step.stage.name);
-                            console.log(repoName + ': ' + step.stage.name);
-                            break;
+                            if (step.stage) {
+                                if (step.stage.status === 'NotExecuted') {
+                                    continue;
+                                }
+                                if (step.stage.status === 'Succeeded') {
+                                    vscode.window.showInformationMessage(repoName + ': ' + step.stage.name);
+                                    continue;
+                                }
+                                if (step.stage.status === 'Failed') {
+                                    vscode.window.showWarningMessage(repoName + ': ' + step.stage.name);
+                                    continue;
+                                }
+                            }
                         }
                         case 'Promote': {
-                            vscode.window.showInformationMessage(repoName + ': promoted to ' + step.promote.environment + ". Access application [here](" + step.promote.applicationURL + ")");
-                            console.log(repoName + ': promoted to ' + step.promote.environment + ". Access application " + step.promote.applicationURL);
-                            break;
+                            if (!step.promote) {
+                                continue;
+                            }
+                            if (step.promote.status === 'Succeeded') {
+                                vscode.window.showInformationMessage(repoName + ': promoted to ' + step.promote.environment + ". Access application [here](" + step.promote.applicationURL + ")");
+                                continue;
+                            }
+                            if (step.promote.status === 'Failed') {
+                                vscode.window.showWarningMessage(repoName + ': promoted to ' + step.promote.environment + ' failed');
+                                continue;
+                            }
                         }
                         default: {
-                            //statements; 
-                            break;
                         }
                     }
                 }
@@ -95,6 +115,8 @@ export function activate(context: vscode.ExtensionContext) {
                     console.log(err);
                 }
             });
+        // // watch returns a request object which you can use to abort the watch.
+        // setTimeout(() => { req.abort(); }, 100 * 10000);
     });
     context.subscriptions.push(disposableActivity);
 
