@@ -1,5 +1,6 @@
 import { EventEmitter, TreeItem, Event, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, ProviderResult, TreeView } from 'vscode';
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { TreeDataProvider } from 'vscode';
 const k8s = require('@kubernetes/client-node');
 
@@ -9,6 +10,9 @@ interface ModelNode {
     readonly isDirectory: boolean;
     readonly label: string;
     readonly title: string;
+    readonly contextValue: string;
+    readonly tooltip: string;
+    readonly iconPath: string;
 
     getChildren(): ModelNode[];
 
@@ -40,6 +44,43 @@ export class BuildNode implements ModelNode {
     get label(): string {
         return this.buildNumber;
     }
+
+    get iconPath(): string {
+        switch (this.status) {
+            case "Succeeded":
+                return "images/atomist_build_passed.png";
+            case "Failed":
+            case "Error":
+                return "images/atomist_build_failed.png";
+            case "Running":
+                return "images/spinner.gif";
+            case "Aborted":
+                return "images/circle-64.png";
+        }
+        return "";
+    }
+
+    get tooltip(): string {
+        return "#" + this.buildNumber + " status: " + this.status;
+    }
+
+    get status(): string {
+        let status = "";
+        let pipeline = this.pipeline;
+        if (pipeline) {
+            let spec = pipeline.spec;
+            if (spec) {
+                status = spec.status;
+            }
+        }
+        status = status || "Unknown";
+        return status;
+    }
+
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.build";
+    }
 }
 
 
@@ -65,18 +106,28 @@ export class RepoNode implements ModelNode {
         return this.repoName;
     }
 
+    get tooltip(): string {
+        return "Git Repository " + this.owner.folder + "/" + this.repoName;
+    }
+
+    get iconPath(): string {
+        return "images/github.png";
+    }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.repo";
+    }
+
     parent(): ModelNode {
         return this.owner;
     }
 
     getChildren(): ModelNode[] {
-        // TODO sorting
-        let answer: ModelNode[] = [];
+        let answer: BuildNode[] = [];
         this.nodes.forEach((value: BuildNode, key: string) => {
             answer.push(value);
         });
-        return answer;
-        /*         return this.nodes.values().sort((n1, n2) => {
+        answer.sort((n1, n2) => {
             if (n1.buildNumber && !n2.buildNumber) {
                 return 1;
             }
@@ -84,10 +135,10 @@ export class RepoNode implements ModelNode {
             if (!n1.buildNumber && n2.buildNumber) {
                 return -1;
             }
-
-            return n2.buildNumber.localeCompare(n1.buildNumber);
+            return +n2.buildNumber - (+n1.buildNumber);
         });
- */    }
+        return answer;
+    }
 
 
     upsertPipeline(buildNumber: string, pipeline: any) {
@@ -136,17 +187,24 @@ export class OwnerNode implements ModelNode {
         return this.folder;
     }
 
+    get tooltip(): string {
+        return "Folder: " + this.folder;
+    }
+
+    get iconPath(): string {
+        return "";
+    }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.owner";
+    }
+
     parent(): ModelNode {
         return this.model;
     }
 
     getChildren(): ModelNode[] {
-        // TODO sorting
-        let answer: ModelNode[] = [];
-        this.nodes.forEach((value: RepoNode, key: string) => {
-            answer.push(value);
-        });
-        return answer;
+        return mapValuesInKeyOrder(this.nodes);
     }
 
     upsertPipeline(repoName: string, buildNumber: string, pipeline: any) {
@@ -179,12 +237,7 @@ export class PipelineModel implements ModelNode {
     resource: vscode.Uri = Uri.parse("pipeline:localhost");
 
     getChildren(): ModelNode[] {
-        // TODO sorting
-        let answer: ModelNode[] = [];
-        this.nodes.forEach((value: OwnerNode, key: string) => {
-            answer.push(value);
-        });
-        return answer;
+        return mapValuesInKeyOrder(this.nodes);
     }
 
     parent(): ModelNode {
@@ -202,6 +255,18 @@ export class PipelineModel implements ModelNode {
 
     get label(): string {
         return "Pipelines";
+    }
+
+    get tooltip(): string {
+        return "Jenkins X Pipelines";
+    }
+
+    get iconPath(): string {
+        return "";
+    }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines";
     }
 
     getNodeChildren(element?: ModelNode): ModelNode[] {
@@ -318,9 +383,11 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
     }
 
     public getTreeItem(element: ModelNode): TreeItem {
-        return {
+        let answer: TreeItem = {
             label: element.label,
             resourceUri: element.resource,
+            contextValue: element.contextValue,
+            tooltip: element.tooltip,
             collapsibleState: element.isDirectory ? TreeItemCollapsibleState.Collapsed : void 0,
             command: element.isDirectory ? void 0 : {
                 command: 'PipelineExplorer.openFtpResource',
@@ -328,6 +395,12 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
                 title: element.title,
             }
         };
+        let iconPath = element.iconPath;
+        if (iconPath) {
+            answer.iconPath = vscode.Uri.file(path.join(__dirname, "../" + iconPath));
+            //console.log("__dirname is " + __dirname + " for " + iconPath + " so using " + answer.iconPath);
+        }
+        return answer;
     }
 
     public getChildren(element?: ModelNode): ModelNode[] | Thenable<ModelNode[]> {
@@ -361,17 +434,47 @@ export class PipelineExplorer {
             vscode.window.registerTreeDataProvider('extension.vsJenkinsXExplorer', this.treeProvider),
 
             vscode.commands.registerCommand('PipelineExplorer.refresh', () => this.treeProvider.refresh()),
+            vscode.commands.registerCommand('PipelineExplorer.openPipelineLogURL', resource => this.openPipelineLogURL(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.openRepositoryURL', resource => this.openRepositoryURL(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPipelineResource', resource => this.openResource(resource)),
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
         ];
     }
-//    private openResource(resource?: vscode.Uri): void {
+    //    private openResource(resource?: vscode.Uri): void {
 
-    private openResource(resource: any): void {
-        if (!resource) {
-            console.log("No resource selected!");
-        } else {
-            console.log("About to open resource " + resource);
+    private openPipelineLogURL(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    openUrl(spec.buildLogsUrl);
+                }
+            }
+        }
+    }
+
+    private openRepositoryURL(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    openUrl(spec.gitUrl);
+                }
+            }
+        }
+    }
+
+    private openResource(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    openUrl(spec.buildUrl);
+                }
+            }
         }
     }
 
@@ -392,6 +495,28 @@ export class PipelineExplorer {
         return null;
     }
 
+}
+
+function mapValuesInKeyOrder(nodes: Map<string, ModelNode>): ModelNode[] {
+    let keys: string[] = [];
+    nodes.forEach((value: ModelNode, key: string) => {
+        keys.push(key);
+    });
+    keys.sort();
+    let answer: ModelNode[] = [];
+    keys.forEach((key: string) => {
+        let value = nodes.get(key);
+        if (value) {
+            answer.push(value);
+        }
+    });
+    return answer;
+}
+
+function openUrl(u?: string): void {
+    if (u) {
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(u));
+    }
 }
 
 /*
