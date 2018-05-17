@@ -13,16 +13,47 @@
         "Other"
     ],
     "activationEvents": [
+        "onView:extension.vsJenkinsXExplorer",
         "onCommand:extension.watchActivity"
     ],
     "main": "./out/extension",
+    "icon": "images/jx-logo.png",
     "contributes": {
         "commands": [
             {
                 "command": "extension.watchActivity",
-                "title": "jx watch activities"
+                "title": "jx Watch Activities",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.openPipelineResource",
+                "title": "jx Open Resource",
+                "category": "Jenkins X"
             }
-        ]
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "extension.vsJenkinsXExplorer",
+                    "name": "Jenkins X"
+                }
+            ]
+        },
+        "menus": {
+            "view/item/context": [
+                {
+                    "command": "PipelineExplorer.openPipelineResource",
+                    "when": "view == extension.vsJenkinsXExplorer",
+                    "group": "1"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "PipelineExplorer.openPipelineResource",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
