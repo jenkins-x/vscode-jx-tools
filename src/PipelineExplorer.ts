@@ -1,5 +1,6 @@
 import { EventEmitter, TreeItem, Event, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, ProviderResult, TreeView } from 'vscode';
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { TreeDataProvider } from 'vscode';
 const k8s = require('@kubernetes/client-node');
 
@@ -11,6 +12,7 @@ interface ModelNode {
     readonly title: string;
     readonly contextValue: string;
     readonly tooltip: string;
+    readonly iconPath: string;
 
     getChildren(): ModelNode[];
 
@@ -43,9 +45,38 @@ export class BuildNode implements ModelNode {
         return this.buildNumber;
     }
 
-    get tooltip(): string {
-        return "#" + this.buildNumber + " status CHEESE";
+    get iconPath(): string {
+        switch (this.status) {
+            case "Succeeded":
+                return "images/atomist_build_passed.png";
+            case "Failed":
+            case "Error":
+                return "images/atomist_build_failed.png";
+            case "Running":
+                return "images/spinner.gif";
+            case "Aborted":
+                return "images/circle-64.png";
+        }
+        return "";
     }
+
+    get tooltip(): string {
+        return "#" + this.buildNumber + " status: " + this.status;
+    }
+
+    get status(): string {
+        let status = "";
+        let pipeline = this.pipeline;
+        if (pipeline) {
+            let spec = pipeline.spec;
+            if (spec) {
+                status = spec.status;
+            }
+        }
+        status = status || "Unknown";
+        return status;
+    }
+
 
     get contextValue(): string {
         return "vsJenkinsX.pipelines.build";
@@ -77,6 +108,10 @@ export class RepoNode implements ModelNode {
 
     get tooltip(): string {
         return "Git Repository " + this.owner.folder + "/" + this.repoName;
+    }
+
+    get iconPath(): string {
+        return "images/github.png";
     }
 
     get contextValue(): string {
@@ -156,6 +191,10 @@ export class OwnerNode implements ModelNode {
         return "Folder: " + this.folder;
     }
 
+    get iconPath(): string {
+        return "";
+    }
+
     get contextValue(): string {
         return "vsJenkinsX.pipelines.owner";
     }
@@ -220,6 +259,10 @@ export class PipelineModel implements ModelNode {
 
     get tooltip(): string {
         return "Jenkins X Pipelines";
+    }
+
+    get iconPath(): string {
+        return "";
     }
 
     get contextValue(): string {
@@ -340,7 +383,7 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
     }
 
     public getTreeItem(element: ModelNode): TreeItem {
-        return {
+        let answer: TreeItem = {
             label: element.label,
             resourceUri: element.resource,
             contextValue: element.contextValue,
@@ -352,6 +395,12 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
                 title: element.title,
             }
         };
+        let iconPath = element.iconPath;
+        if (iconPath) {
+            answer.iconPath = vscode.Uri.file(path.join(__dirname, "../" + iconPath));
+            //console.log("__dirname is " + __dirname + " for " + iconPath + " so using " + answer.iconPath);
+        }
+        return answer;
     }
 
     public getChildren(element?: ModelNode): ModelNode[] | Thenable<ModelNode[]> {
@@ -417,11 +466,15 @@ export class PipelineExplorer {
         }
     }
 
-    private openResource(resource: any): void {
-        if (!resource) {
-            console.log("No resource selected!");
-        } else {
-            console.log("About to open resource " + resource);
+    private openResource(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    openUrl(spec.buildUrl);
+                }
+            }
         }
     }
 
