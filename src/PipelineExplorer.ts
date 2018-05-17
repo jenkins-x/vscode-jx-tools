@@ -10,6 +10,7 @@ interface ModelNode {
     readonly label: string;
     readonly title: string;
     readonly contextValue: string;
+    readonly tooltip: string;
 
     getChildren(): ModelNode[];
 
@@ -42,6 +43,10 @@ export class BuildNode implements ModelNode {
         return this.buildNumber;
     }
 
+    get tooltip(): string {
+        return "#" + this.buildNumber + " status CHEESE";
+    }
+
     get contextValue(): string {
         return "vsJenkinsX.pipelines.build";
     }
@@ -70,6 +75,10 @@ export class RepoNode implements ModelNode {
         return this.repoName;
     }
 
+    get tooltip(): string {
+        return "Git Repository " + this.owner.folder + "/" + this.repoName;
+    }
+
     get contextValue(): string {
         return "vsJenkinsX.pipelines.repo";
     }
@@ -79,13 +88,11 @@ export class RepoNode implements ModelNode {
     }
 
     getChildren(): ModelNode[] {
-        // TODO sorting
-        let answer: ModelNode[] = [];
+        let answer: BuildNode[] = [];
         this.nodes.forEach((value: BuildNode, key: string) => {
             answer.push(value);
         });
-        return answer;
-        /*         return this.nodes.values().sort((n1, n2) => {
+        answer.sort((n1, n2) => {
             if (n1.buildNumber && !n2.buildNumber) {
                 return 1;
             }
@@ -93,10 +100,10 @@ export class RepoNode implements ModelNode {
             if (!n1.buildNumber && n2.buildNumber) {
                 return -1;
             }
-
-            return n2.buildNumber.localeCompare(n1.buildNumber);
+            return +n2.buildNumber - (+n1.buildNumber);
         });
- */    }
+        return answer;
+    }
 
 
     upsertPipeline(buildNumber: string, pipeline: any) {
@@ -145,6 +152,10 @@ export class OwnerNode implements ModelNode {
         return this.folder;
     }
 
+    get tooltip(): string {
+        return "Folder: " + this.folder;
+    }
+
     get contextValue(): string {
         return "vsJenkinsX.pipelines.owner";
     }
@@ -154,12 +165,7 @@ export class OwnerNode implements ModelNode {
     }
 
     getChildren(): ModelNode[] {
-        // TODO sorting
-        let answer: ModelNode[] = [];
-        this.nodes.forEach((value: RepoNode, key: string) => {
-            answer.push(value);
-        });
-        return answer;
+        return mapValuesInKeyOrder(this.nodes);
     }
 
     upsertPipeline(repoName: string, buildNumber: string, pipeline: any) {
@@ -192,12 +198,7 @@ export class PipelineModel implements ModelNode {
     resource: vscode.Uri = Uri.parse("pipeline:localhost");
 
     getChildren(): ModelNode[] {
-        // TODO sorting
-        let answer: ModelNode[] = [];
-        this.nodes.forEach((value: OwnerNode, key: string) => {
-            answer.push(value);
-        });
-        return answer;
+        return mapValuesInKeyOrder(this.nodes);
     }
 
     parent(): ModelNode {
@@ -215,6 +216,10 @@ export class PipelineModel implements ModelNode {
 
     get label(): string {
         return "Pipelines";
+    }
+
+    get tooltip(): string {
+        return "Jenkins X Pipelines";
     }
 
     get contextValue(): string {
@@ -339,6 +344,7 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
             label: element.label,
             resourceUri: element.resource,
             contextValue: element.contextValue,
+            tooltip: element.tooltip,
             collapsibleState: element.isDirectory ? TreeItemCollapsibleState.Collapsed : void 0,
             command: element.isDirectory ? void 0 : {
                 command: 'PipelineExplorer.openFtpResource',
@@ -385,7 +391,7 @@ export class PipelineExplorer {
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
         ];
     }
-//    private openResource(resource?: vscode.Uri): void {
+    //    private openResource(resource?: vscode.Uri): void {
 
     private openPipelineLogURL(resource?: BuildNode): void {
         if (resource) {
@@ -394,7 +400,7 @@ export class PipelineExplorer {
                 let spec = pipeline.spec;
                 if (spec) {
                     openUrl(spec.buildLogsUrl);
-                }    
+                }
             }
         }
     }
@@ -406,7 +412,7 @@ export class PipelineExplorer {
                 let spec = pipeline.spec;
                 if (spec) {
                     openUrl(spec.gitUrl);
-                }    
+                }
             }
         }
     }
@@ -436,6 +442,22 @@ export class PipelineExplorer {
         return null;
     }
 
+}
+
+function mapValuesInKeyOrder(nodes: Map<string, ModelNode>): ModelNode[] {
+    let keys: string[] = [];
+    nodes.forEach((value: ModelNode, key: string) => {
+        keys.push(key);
+    });
+    keys.sort();
+    let answer: ModelNode[] = [];
+    keys.forEach((key: string) => {
+        let value = nodes.get(key);
+        if (value) {
+            answer.push(value);
+        }
+    });
+    return answer;
 }
 
 function openUrl(u?: string): void {
