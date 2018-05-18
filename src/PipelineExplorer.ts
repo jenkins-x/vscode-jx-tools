@@ -76,9 +76,36 @@ export class BuildNode implements ModelNode {
         return status;
     }
 
+    get pipelineSpec(): any {
+        let pipeline = this.pipeline;
+        if (pipeline) {
+            return pipeline.spec || {};
+        }
+        return {};
+    }
+
+    get buildLogsUrl(): string {
+        return this.pipelineSpec.buildLogsUrl || "";
+    }
+
+    get buildUrl(): string {
+        return this.pipelineSpec.buildUrl || "";
+    }
+
+    get gitUrl(): string {
+        return this.pipelineSpec.gitUrl || "";
+    }
+
+    get pipelineName(): string {
+        return this.pipelineSpec.pipeline || "";
+    }
 
     get contextValue(): string {
-        return "vsJenkinsX.pipelines.build";
+        let suffix = this.status === "Running" ? ".Running" : "";
+        if (this.buildLogsUrl && this.buildUrl && this.gitUrl) {
+            return "vsJenkinsX.pipelines.build.hasUrls" + suffix;
+        }
+        return "vsJenkinsX.pipelines.build" + suffix;
     }
 }
 
@@ -115,6 +142,10 @@ export class RepoNode implements ModelNode {
 
     get contextValue(): string {
         return "vsJenkinsX.pipelines.repo";
+    }
+
+    get pipelineName(): string {
+        return this.owner.folder + "/" + this.repoName + "/master";
     }
 
     parent(): ModelNode {
@@ -226,6 +257,7 @@ export class OwnerNode implements ModelNode {
         }
     }
 }
+
 
 export class PipelineModel implements ModelNode {
 
@@ -351,9 +383,7 @@ export class PipelineModel implements ModelNode {
             },
             // done callback is called if the watch terminates normally
             (err: any) => {
-                if (err) {
-                    console.log(err);
-                }
+                console.log(`Jenkins X Pipeline watcher got error callback ${err}`);
             });
     }
 
@@ -424,7 +454,7 @@ export class PipelineExplorer {
     private pipelineViewer: TreeView<ModelNode>;
     private pipelineModel = new PipelineModel();
     private treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
-    private terminals = new Map<string,vscode.Terminal>();
+    private terminals = new TerminalCache();
 
     constructor() {
         this.pipelineViewer = vscode.window.createTreeView('extension.vsJenkinsXExplorer', { treeDataProvider: this.treeProvider });
@@ -443,6 +473,8 @@ export class PipelineExplorer {
             vscode.commands.registerCommand('PipelineExplorer.openRepositoryURL', resource => this.openRepositoryURL(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPipelineResource', resource => this.openResource(resource)),
             vscode.commands.registerCommand('PipelineExplorer.watchBuildLog', resource => this.watchBuildLog(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.startPipeline', resource => this.startPipeline(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.stopPipeline', resource => this.stopPipeline(resource)),
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
         ];
     }
@@ -483,6 +515,7 @@ export class PipelineExplorer {
             }
         }
     }
+
     private watchBuildLog(resource?: BuildNode): void {
         if (resource) {
             let pipeline = resource.pipeline;
@@ -492,14 +525,48 @@ export class PipelineExplorer {
                     let pipelineName = spec.pipeline;
                     if (pipelineName) {
                         let buildNumber = spec.build || "";
-                        let terminalName = "Jenkins Log: " + pipelineName + " #" + buildNumber; 
-                        runJXAsTerminal(this.terminals, ["get", "build", "log", pipelineName], terminalName);
+                        let terminalName = "Jenkins Log: " + pipelineName + " #" + buildNumber;
+                        let args = ["get", "build", "log", pipelineName];
+                        if (buildNumber) {
+                            args.push("--build", buildNumber);
+                        }
+                        runJXAsTerminal(this.terminals, args, terminalName);
                     }
                 }
             }
         }
     }
 
+    private startPipeline(resource?: RepoNode | BuildNode): void {
+        if (resource) {
+            let pipelineName = resource.pipelineName;
+            if (pipelineName) {
+                let terminalName = "Jenkins X";
+                let args = ["start", "pipeline", pipelineName];
+                runJXAsTerminal(this.terminals, args, terminalName);
+            }
+        }
+    }
+
+    private stopPipeline(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    let pipelineName = spec.pipeline;
+                    if (pipelineName) {
+                        let buildNumber = spec.build || "";
+                        if (buildNumber) {
+                            let terminalName = "Jenkins X";
+                            let args = ["stop", "pipeline", pipelineName, "--build", buildNumber];
+                            runJXAsTerminal(this.terminals, args, terminalName);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 
     private reveal(): void {
@@ -520,17 +587,42 @@ export class PipelineExplorer {
     }
 }
 
-function runJXAsTerminal(terminals: Map<string,vscode.Terminal>, args: string[], terminalName: string): vscode.Terminal {
-    // TODO validate jx is on the $PATH and if not install it
-    const terminalOptions = {
-        name: terminalName,
-        env: process.env
-    };
-    let terminal = terminals.get(terminalName);
-    if (!terminal) {
-        terminal = vscode.window.createTerminal(terminalOptions);
-        terminals.set(terminalName, terminal);
+
+
+export class TerminalCache {
+    private terminals = new Map<string, vscode.Terminal>();
+
+    constructor() {
+        vscode.window.onDidCloseTerminal(terminal => {
+            const name = terminal.name;
+            let other = this.terminals.get(name);
+            if (other) {
+                console.log(`Detected closing terminal ${name}`);
+                this.terminals.delete(name);
+            }
+        });
     }
+    /** 
+     * Lazily creates a new terminal if one does not already exist
+     */
+    getOrCreate(terminalName: string): vscode.Terminal {
+        let terminal = this.terminals.get(terminalName);
+        if (!terminal) {
+            const terminalOptions = {
+                name: terminalName,
+                env: process.env
+            };
+            terminal = vscode.window.createTerminal(terminalOptions);
+            this.terminals.set(terminalName, terminal);
+        }
+        return terminal;
+    }
+}
+
+
+function runJXAsTerminal(terminals: TerminalCache, args: string[], terminalName: string): vscode.Terminal {
+    // TODO validate jx is on the $PATH and if not install it
+    let terminal = terminals.getOrCreate(terminalName);
     terminal.sendText("jx " + args.join(" "));
     terminal.show();
     return terminal;
