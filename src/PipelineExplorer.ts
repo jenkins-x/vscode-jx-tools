@@ -76,8 +76,30 @@ export class BuildNode implements ModelNode {
         return status;
     }
 
+    get pipelineSpec(): any {
+        let pipeline = this.pipeline;
+        if (pipeline) {
+            return pipeline.spec || {};
+        }
+        return {};
+    }
+
+    get buildLogsUrl(): string {
+        return this.pipelineSpec.buildLogsUrl || "";
+    }
+
+    get buildUrl(): string {
+        return this.pipelineSpec.buildUrl || "";
+    }
+
+    get gitUrl(): string {
+        return this.pipelineSpec.gitUrl || "";
+    }
 
     get contextValue(): string {
+        if (this.buildLogsUrl && this.buildUrl && this.gitUrl) {
+            return "vsJenkinsX.pipelines.build.hasUrls";
+        }
         return "vsJenkinsX.pipelines.build";
     }
 }

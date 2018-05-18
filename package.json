@@ -67,17 +67,17 @@
                 },
                 {
                     "command": "PipelineExplorer.openPipelineLogURL",
-                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
                     "group": "2"
                 },
                 {
                     "command": "PipelineExplorer.openRepositoryURL",
-                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
                     "group": "2"
                 },
                 {
                     "command": "PipelineExplorer.openPipelineResource",
-                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
                     "group": "3"
                 }
             ],
