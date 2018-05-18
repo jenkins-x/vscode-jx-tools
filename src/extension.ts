@@ -3,8 +3,6 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-const k8s = require('@kubernetes/client-node');
-
 import { PipelineExplorer } from './PipelineExplorer';
 import { openDevPod } from './OpenDevPod';
 import { NotifyPromote } from './NotifyPromote';

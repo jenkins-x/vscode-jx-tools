@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import { KubeWatcher, CallbackKind } from './KubeWatcher';
 
-const k8s = require('@kubernetes/client-node');
-
 export class NotifyPromote {
 
 
