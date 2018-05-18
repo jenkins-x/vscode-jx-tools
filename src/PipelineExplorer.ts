@@ -12,16 +12,15 @@ interface ModelNode {
     readonly contextValue: string;
     readonly tooltip: string;
     readonly iconPath: string;
+    readonly commandName: string;
 
     getChildren(): ModelNode[];
 
     parent(): ModelNode;
 }
 
-export class BuildNode implements ModelNode {
-    pipeline: any = null;
-
-    constructor(public resource: vscode.Uri, public repo: RepoNode, public buildNumber: string) {
+export class StageNode implements ModelNode {
+    constructor(public resource: vscode.Uri, public build: BuildNode, public name: string, readonly pipeline: any, readonly step: any, readonly contextValue: string, readonly url?: string) {
     }
 
     getChildren(): ModelNode[] {
@@ -29,11 +28,86 @@ export class BuildNode implements ModelNode {
     }
 
     parent(): ModelNode {
-        return this.repo;
+        return this.build;
     }
 
     get isDirectory(): boolean {
         return false;
+    }
+
+    get title(): string {
+        return "Stage";
+    }
+
+    get label(): string {
+        return this.name;
+    }
+
+    get commandName(): string {
+        /*
+        // TODO wonder if we could only enable these commands if folks double click on the node rather than on selection?
+        
+        switch (this.contextValue) {
+            case "vsJenkinsX.pipelines.stage.app":
+                return "PipelineExplorer.openEnvironmentApplication";
+            case "vsJenkinsX.pipelines.stage.pullRequest":
+                return "PipelineExplorer.openPullRequest";
+            case "vsJenkinsX.pipelines.stage.update":
+                return "PipelineExplorer.openUpdate";
+        }
+        */
+        return "";
+    }
+
+    get iconPath(): string {
+        switch (this.status) {
+            case "Succeeded":
+                return "images/atomist_build_passed.png";
+            case "Failed":
+            case "Error":
+                return "images/atomist_build_failed.png";
+            case "Running":
+                return "images/spinner.gif";
+            case "Aborted":
+                return "images/circle-64.png";
+            case "NotExecuted":
+                // TODO
+                return "";
+        }
+        return "";
+    }
+
+    get tooltip(): string {
+        return this.name + " status: " + this.status;
+    }
+
+    get status(): string {
+        let step = this.step || {};
+        return step.status || "Unknown";
+    }
+
+}
+
+
+export class BuildNode implements ModelNode {
+    private _pipeline: any = null;
+    private _children: StageNode[] = [];
+
+    constructor(public resource: vscode.Uri, public repo: RepoNode, public buildNumber: string) {
+    }
+
+    getChildren(): ModelNode[] {
+        let answer: ModelNode[] = [];
+        this._children.forEach(value => answer.push(value));
+        return answer;
+    }
+
+    parent(): ModelNode {
+        return this.repo;
+    }
+
+    get isDirectory(): boolean {
+        return true;
     }
 
     get title(): string {
@@ -42,6 +116,10 @@ export class BuildNode implements ModelNode {
 
     get label(): string {
         return this.buildNumber;
+    }
+
+    get commandName(): string {
+        return "";
     }
 
     get iconPath(): string {
@@ -62,6 +140,74 @@ export class BuildNode implements ModelNode {
     get tooltip(): string {
         return "#" + this.buildNumber + " status: " + this.status;
     }
+
+    get pipeline(): any {
+        return this._pipeline;
+    }
+
+    set pipeline(that: any) {
+        this._pipeline = that;
+
+        // lets create the children 
+        this._children = [];
+
+        let spec = this.pipelineSpec;
+        let steps = spec.steps;
+        if (steps) {
+            for (const step of steps) {
+                if (step) {
+                    var subStep = step;
+                    let stage = step.stage;
+                    let promote = step.promote;
+                    var name = "";
+                    if (stage) {
+                        subStep = stage;
+                        name = stage.name;
+                        this._children.push(new StageNode(addChildUrl(this.resource, name), this, name, this.pipeline, subStep, "vsJenkinsX.pipelines.stage", ""));
+                    }
+                    if (promote) {
+                        subStep = promote;
+                        let envName: string = stringCapitalise(promote.environment);
+                        name = "Promote to " + envName + "";
+
+                        let appUrl = promote.applicationURL;
+                        const stageContextValue = appUrl ? "vsJenkinsX.pipelines.stage.app" : "vsJenkinsX.pipelines.stage";
+                        this._children.push(new StageNode(addChildUrl(this.resource, name), this, name, this.pipeline, subStep, stageContextValue, appUrl));
+                        let pullRequest = subStep.pullRequest;
+                        if (pullRequest) {
+                            var pullRequestName = name + " Pull Request";
+                            let prUrl: string = pullRequest.pullRequestURL || "";
+                            if (prUrl) {
+                                let idx = prUrl.lastIndexOf("/");
+                                if (idx > 0) {
+                                    pullRequestName += " #" + prUrl.substring(idx + 1);
+                                }
+                            }
+                            this._children.push(new StageNode(addChildUrl(this.resource, name), this, pullRequestName, this.pipeline, pullRequest, "vsJenkinsX.pipelines.stage.pullRequest", prUrl));
+                        }
+                        let update = subStep.update;
+                        if (update) {
+                            var updatetName = name + " Update";
+                            let statuses = update.statuses;
+                            var updateUrl = "";
+                            for (const status of statuses) {
+                                updateUrl = status.url;
+                                if (updateUrl) {
+                                    break;
+                                }
+                            }
+                            this._children.push(new StageNode(addChildUrl(this.resource, name), this, updatetName, this.pipeline, pullRequest, "vsJenkinsX.pipelines.stage.update", updateUrl));
+                        }
+                        if (appUrl) {
+                            let appName = "App promoted to " + envName;
+                            this._children.push(new StageNode(addChildUrl(this.resource, name), this, appName, this.pipeline, promote, "vsJenkinsX.pipelines.stage.app", appUrl));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     get status(): string {
         let status = "";
@@ -134,6 +280,10 @@ export class RepoNode implements ModelNode {
 
     get tooltip(): string {
         return "Git Repository " + this.owner.folder + "/" + this.repoName;
+    }
+
+    get commandName(): string {
+        return "";
     }
 
     get iconPath(): string {
@@ -221,6 +371,10 @@ export class OwnerNode implements ModelNode {
         return "Folder: " + this.folder;
     }
 
+    get commandName(): string {
+        return "";
+    }
+
     get iconPath(): string {
         return "";
     }
@@ -290,6 +444,10 @@ export class PipelineModel implements ModelNode {
 
     get tooltip(): string {
         return "Jenkins X Pipelines";
+    }
+
+    get commandName(): string {
+        return "";
     }
 
     get iconPath(): string {
@@ -425,15 +583,14 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
             answer.iconPath = vscode.Uri.file(path.join(__dirname, "../" + iconPath));
             //console.log("__dirname is " + __dirname + " for " + iconPath + " so using " + answer.iconPath);
         }
-        /*
-        if (contextValue === "vsJenkinsX.pipelines.build") {
+        const commandName = element.commandName;
+        if (commandName) {
             answer.command = {
-                command: 'PipelineExplorer.watchBuildLog',
-                arguments: [element.resource],
-                title: element.title,
+                command: commandName,
+                arguments: [element],
+                title: element.label,
             };
         }
-        */
         return answer;
     }
 
@@ -476,9 +633,18 @@ export class PipelineExplorer {
             vscode.commands.registerCommand('PipelineExplorer.startPipeline', resource => this.startPipeline(resource)),
             vscode.commands.registerCommand('PipelineExplorer.stopPipeline', resource => this.stopPipeline(resource)),
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
+            vscode.commands.registerCommand('PipelineExplorer.openEnvironmentApplication', resource => this.openStageNodeUrl(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.openPullRequest', resource => this.openStageNodeUrl(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.openUpdate', resource => this.openStageNodeUrl(resource)),
         ];
     }
     //    private openResource(resource?: vscode.Uri): void {
+
+    private openStageNodeUrl(resource?: StageNode): void {
+        if (resource) {
+            openUrl(resource.url);
+        }
+    }
 
     private openPipelineLogURL(resource?: BuildNode): void {
         if (resource) {
@@ -567,7 +733,6 @@ export class PipelineExplorer {
             }
         }
     }
-
 
     private reveal(): void {
         const node = this.getNode();
@@ -669,6 +834,12 @@ function nodeForUri(uri: vscode.Uri, node: ModelNode): ModelNode | null {
     return null;
 }
 
+function stringCapitalise(text?: string): string {
+    if (text) {
+        return text.substring(0, 1).toUpperCase() + text.substring(1);
+    }
+    return "";
+}
 
     /*
     if (await checkPresent(context, 'command')) {
