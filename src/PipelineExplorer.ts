@@ -4,7 +4,6 @@ import * as path from 'path';
 import { TreeDataProvider } from 'vscode';
 const k8s = require('@kubernetes/client-node');
 
-
 interface ModelNode {
     readonly resource: vscode.Uri;
     readonly isDirectory: boolean;
@@ -383,23 +382,28 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
     }
 
     public getTreeItem(element: ModelNode): TreeItem {
+        const contextValue = element.contextValue;
         let answer: TreeItem = {
             label: element.label,
             resourceUri: element.resource,
-            contextValue: element.contextValue,
+            contextValue: contextValue,
             tooltip: element.tooltip,
-            collapsibleState: element.isDirectory ? TreeItemCollapsibleState.Collapsed : void 0,
-            command: element.isDirectory ? void 0 : {
-                command: 'PipelineExplorer.openFtpResource',
-                arguments: [element.resource],
-                title: element.title,
-            }
+            collapsibleState: element.isDirectory ? TreeItemCollapsibleState.Collapsed : void 0
         };
         let iconPath = element.iconPath;
         if (iconPath) {
             answer.iconPath = vscode.Uri.file(path.join(__dirname, "../" + iconPath));
             //console.log("__dirname is " + __dirname + " for " + iconPath + " so using " + answer.iconPath);
         }
+        /*
+        if (contextValue === "vsJenkinsX.pipelines.build") {
+            answer.command = {
+                command: 'PipelineExplorer.watchBuildLog',
+                arguments: [element.resource],
+                title: element.title,
+            };
+        }
+        */
         return answer;
     }
 
@@ -420,6 +424,7 @@ export class PipelineExplorer {
     private pipelineViewer: TreeView<ModelNode>;
     private pipelineModel = new PipelineModel();
     private treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
+    private terminals = new Map<string,vscode.Terminal>();
 
     constructor() {
         this.pipelineViewer = vscode.window.createTreeView('extension.vsJenkinsXExplorer', { treeDataProvider: this.treeProvider });
@@ -437,6 +442,7 @@ export class PipelineExplorer {
             vscode.commands.registerCommand('PipelineExplorer.openPipelineLogURL', resource => this.openPipelineLogURL(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openRepositoryURL', resource => this.openRepositoryURL(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPipelineResource', resource => this.openResource(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.watchBuildLog', resource => this.watchBuildLog(resource)),
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
         ];
     }
@@ -477,6 +483,24 @@ export class PipelineExplorer {
             }
         }
     }
+    private watchBuildLog(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    let pipelineName = spec.pipeline;
+                    if (pipelineName) {
+                        let buildNumber = spec.build || "";
+                        let terminalName = "Jenkins Log: " + pipelineName + " #" + buildNumber; 
+                        runJXAsTerminal(this.terminals, ["get", "build", "log", pipelineName], terminalName);
+                    }
+                }
+            }
+        }
+    }
+
+
 
     private reveal(): void {
         const node = this.getNode();
@@ -494,7 +518,22 @@ export class PipelineExplorer {
         }
         return null;
     }
+}
 
+function runJXAsTerminal(terminals: Map<string,vscode.Terminal>, args: string[], terminalName: string): vscode.Terminal {
+    // TODO validate jx is on the $PATH and if not install it
+    const terminalOptions = {
+        name: terminalName,
+        env: process.env
+    };
+    let terminal = terminals.get(terminalName);
+    if (!terminal) {
+        terminal = vscode.window.createTerminal(terminalOptions);
+        terminals.set(terminalName, terminal);
+    }
+    terminal.sendText("jx " + args.join(" "));
+    terminal.show();
+    return terminal;
 }
 
 function mapValuesInKeyOrder(nodes: Map<string, ModelNode>): ModelNode[] {
@@ -537,3 +576,45 @@ function nodeForUri(uri: vscode.Uri, node: ModelNode): ModelNode | null {
     }
     return null;
 }
+
+
+    /*
+    if (await checkPresent(context, 'command')) {
+        const term = context.host.createTerminal(terminalName, path(context), command);
+        term.show();
+    }
+    */
+
+/*
+type CheckPresentMessageMode = 'command' | 'activation' | 'silent';
+
+
+interface Context {
+    readonly host: Host;
+    readonly fs: FS;
+    readonly shell: Shell;
+    readonly installDependenciesCallback: () => void;
+    binFound: boolean;
+    binPath: string;
+}
+
+async function checkPresent(context: Context, errorMessageMode: CheckPresentMessageMode): Promise<boolean> {
+    if (context.binFound) {
+        return true;
+    }
+
+    return await checkForJXInternal(context, errorMessageMode);
+}
+
+async function checkForJXInternal(context: Context, errorMessageMode: CheckPresentMessageMode): Promise<boolean> {
+    const binName = 'jx';
+    const bin = context.host.getConfiguration('vs-kubernetes')[`vs-jx.${binName}-path`];
+
+    const contextMessage = getCheckKubectlContextMessage(errorMessageMode);
+    const inferFailedMessage = 'Could not find "jx" binary.' + contextMessage;
+    const configuredFileMissingMessage = bin + ' does not exist!' + contextMessage;
+
+    return await binutil.checkForBinary(context, bin, binName, inferFailedMessage, configuredFileMissingMessage, errorMessageMode !== 'silent');
+}
+*/
+

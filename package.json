@@ -26,18 +26,27 @@
                 "category": "Jenkins X"
             },
             {
-                "command": "PipelineExplorer.openPipelineResource",
-                "title": "View Pipeline",
+                "command": "PipelineExplorer.watchBuildLog",
+                "title": "Build Log",
+                "description": "Watch the pipeline build log in a terminal window",
                 "category": "Jenkins X"
             },
             {
                 "command": "PipelineExplorer.openPipelineLogURL",
-                "title": "Open Pipeline Log",
+                "title": "Browse Build Log",
+                "description": "Watch the pipeline build log in a new browser window",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.openPipelineResource",
+                "title": "Browse Pipeline",
+                "description": "Open a new browser window to view the pipeline",
                 "category": "Jenkins X"
             },
             {
                 "command": "PipelineExplorer.openRepositoryURL",
-                "title": "Open Repository URL",
+                "title": "Browse Repository",
+                "description": "Watch the pipeline build log in a new browser window",
                 "category": "Jenkins X"
             }
         ],
@@ -52,19 +61,24 @@
         "menus": {
             "view/item/context": [
                 {
-                    "command": "PipelineExplorer.openPipelineLogURL",
+                    "command": "PipelineExplorer.watchBuildLog",
                     "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
                     "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openPipelineLogURL",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
+                    "group": "2"
                 },
                 {
                     "command": "PipelineExplorer.openRepositoryURL",
                     "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
-                    "group": "1"
+                    "group": "2"
                 },
                 {
                     "command": "PipelineExplorer.openPipelineResource",
                     "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
-                    "group": "2"
+                    "group": "3"
                 }
             ],
             "commandPalette": [
