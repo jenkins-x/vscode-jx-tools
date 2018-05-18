@@ -14,7 +14,8 @@
     ],
     "activationEvents": [
         "onView:extension.vsJenkinsXExplorer",
-        "onCommand:extension.watchActivity"
+        "onCommand:extension.watchActivity",
+        "onCommand:vsJenkinsX.openDevPod"
     ],
     "main": "./out/extension",
     "icon": "images/jx-logo.png",
@@ -22,7 +23,13 @@
         "commands": [
             {
                 "command": "extension.watchActivity",
-                "title": "jx Watch Activities",
+                "title": "Watch Activities",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "vsJenkinsX.openDevPod",
+                "title": "Open DevPod Terminal",
+                "description": "Open a new DevPod terminal for building inside the kubernetes cluster",
                 "category": "Jenkins X"
             },
             {
