@@ -48,6 +48,18 @@
                 "title": "Browse Repository",
                 "description": "Watch the pipeline build log in a new browser window",
                 "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.startPipeline",
+                "title": "Start Pipeline",
+                "description": "Triggers a new pipeline build",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.stopPipeline",
+                "title": "Stop Pipeline",
+                "description": "Terminates the current pipeline build",
+                "category": "Jenkins X"
             }
         ],
         "views": {
@@ -66,6 +78,16 @@
                     "group": "1"
                 },
                 {
+                    "command": "PipelineExplorer.watchBuildLog",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.Running",
+                    "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openPipelineLogURL",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
+                    "group": "2"
+                },
+                {
                     "command": "PipelineExplorer.openPipelineLogURL",
                     "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
                     "group": "2"
@@ -76,9 +98,44 @@
                     "group": "2"
                 },
                 {
+                    "command": "PipelineExplorer.openRepositoryURL",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
+                    "group": "2"
+                },
+                {
                     "command": "PipelineExplorer.openPipelineResource",
-                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
                     "group": "3"
+                },
+                {
+                    "command": "PipelineExplorer.openPipelineResource",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
+                    "group": "3"
+                },
+                {
+                    "command": "PipelineExplorer.startPipeline",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build",
+                    "group": "4"
+                },
+                {
+                    "command": "PipelineExplorer.startPipeline",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
+                    "group": "4"
+                },
+                {
+                    "command": "PipelineExplorer.startPipeline",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.repo",
+                    "group": "4"
+                },
+                {
+                    "command": "PipelineExplorer.stopPipeline",
+                    "when": "view == extension.vsJenkinsXExplorer  && viewItem == vsJenkinsX.pipelines.build.Running",
+                    "group": "4"
+                },
+                {
+                    "command": "PipelineExplorer.stopPipeline",
+                    "when": "view == extension.vsJenkinsXExplorer  && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
+                    "group": "4"
                 }
             ],
             "commandPalette": [

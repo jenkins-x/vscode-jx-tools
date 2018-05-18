@@ -96,11 +96,16 @@ export class BuildNode implements ModelNode {
         return this.pipelineSpec.gitUrl || "";
     }
 
+    get pipelineName(): string {
+        return this.pipelineSpec.pipeline || "";
+    }
+
     get contextValue(): string {
+        let suffix = this.status === "Running" ? ".Running" : "";
         if (this.buildLogsUrl && this.buildUrl && this.gitUrl) {
-            return "vsJenkinsX.pipelines.build.hasUrls";
+            return "vsJenkinsX.pipelines.build.hasUrls" + suffix;
         }
-        return "vsJenkinsX.pipelines.build";
+        return "vsJenkinsX.pipelines.build" + suffix;
     }
 }
 
@@ -137,6 +142,10 @@ export class RepoNode implements ModelNode {
 
     get contextValue(): string {
         return "vsJenkinsX.pipelines.repo";
+    }
+
+    get pipelineName(): string {
+        return this.owner.folder + "/" + this.repoName + "/master";
     }
 
     parent(): ModelNode {
@@ -374,9 +383,7 @@ export class PipelineModel implements ModelNode {
             },
             // done callback is called if the watch terminates normally
             (err: any) => {
-                if (err) {
-                    console.log(err);
-                }
+                console.log(`Jenkins X Pipeline watcher got error callback ${err}`);
             });
     }
 
@@ -466,6 +473,8 @@ export class PipelineExplorer {
             vscode.commands.registerCommand('PipelineExplorer.openRepositoryURL', resource => this.openRepositoryURL(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPipelineResource', resource => this.openResource(resource)),
             vscode.commands.registerCommand('PipelineExplorer.watchBuildLog', resource => this.watchBuildLog(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.startPipeline', resource => this.startPipeline(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.stopPipeline', resource => this.stopPipeline(resource)),
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
         ];
     }
@@ -506,6 +515,7 @@ export class PipelineExplorer {
             }
         }
     }
+
     private watchBuildLog(resource?: BuildNode): void {
         if (resource) {
             let pipeline = resource.pipeline;
@@ -515,14 +525,48 @@ export class PipelineExplorer {
                     let pipelineName = spec.pipeline;
                     if (pipelineName) {
                         let buildNumber = spec.build || "";
-                        let terminalName = "Jenkins Log: " + pipelineName + " #" + buildNumber; 
-                        runJXAsTerminal(this.terminals, ["get", "build", "log", pipelineName], terminalName);
+                        let terminalName = "Jenkins Log: " + pipelineName + " #" + buildNumber;
+                        let args = ["get", "build", "log", pipelineName];
+                        if (buildNumber) {
+                            args.push("--build", buildNumber);
+                        }
+                        runJXAsTerminal(this.terminals, args, terminalName);
                     }
                 }
             }
         }
     }
 
+    private startPipeline(resource?: RepoNode | BuildNode): void {
+        if (resource) {
+            let pipelineName = resource.pipelineName;
+            if (pipelineName) {
+                let terminalName = "Jenkins X";
+                let args = ["start", "pipeline", pipelineName];
+                runJXAsTerminal(this.terminals, args, terminalName);
+            }
+        }
+    }
+
+    private stopPipeline(resource?: BuildNode): void {
+        if (resource) {
+            let pipeline = resource.pipeline;
+            if (pipeline) {
+                let spec = pipeline.spec;
+                if (spec) {
+                    let pipelineName = spec.pipeline;
+                    if (pipelineName) {
+                        let buildNumber = spec.build || "";
+                        if (buildNumber) {
+                            let terminalName = "Jenkins X";
+                            let args = ["stop", "pipeline", pipelineName, "--build", buildNumber];
+                            runJXAsTerminal(this.terminals, args, terminalName);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 
     private reveal(): void {
@@ -546,7 +590,7 @@ export class PipelineExplorer {
 
 
 export class TerminalCache {
-    private terminals = new Map<string,vscode.Terminal>();
+    private terminals = new Map<string, vscode.Terminal>();
 
     constructor() {
         vscode.window.onDidCloseTerminal(terminal => {
@@ -571,8 +615,8 @@ export class TerminalCache {
             terminal = vscode.window.createTerminal(terminalOptions);
             this.terminals.set(terminalName, terminal);
         }
-    return terminal;
-    } 
+        return terminal;
+    }
 }
 
 
