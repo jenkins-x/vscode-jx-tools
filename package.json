@@ -50,6 +50,24 @@
                 "category": "Jenkins X"
             },
             {
+                "command": "PipelineExplorer.openEnvironmentApplication",
+                "title": "Open Application",
+                "description": "Open the application in this environment",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.openPullRequest",
+                "title": "Open Promote Pull Request",
+                "description": "Open the promotion pull request for this step",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "PipelineExplorer.openUpdate",
+                "title": "Open Promote Pipeline",
+                "description": "Open the promotion pipeline logfor this step",
+                "category": "Jenkins X"
+            },
+            {
                 "command": "PipelineExplorer.startPipeline",
                 "title": "Start Pipeline",
                 "description": "Triggers a new pipeline build",
@@ -90,6 +108,21 @@
                 {
                     "command": "PipelineExplorer.watchBuildLog",
                     "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
+                    "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openEnvironmentApplication",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.stage.app",
+                    "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openPullRequest",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.stage.pullRequest",
+                    "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openUpdate",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.stage.update",
                     "group": "1"
                 },
                 {
