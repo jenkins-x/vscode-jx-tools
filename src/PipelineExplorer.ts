@@ -227,6 +227,7 @@ export class OwnerNode implements ModelNode {
     }
 }
 
+
 export class PipelineModel implements ModelNode {
 
     private nodes: Map<string, OwnerNode> = new Map<string, OwnerNode>();
@@ -424,7 +425,7 @@ export class PipelineExplorer {
     private pipelineViewer: TreeView<ModelNode>;
     private pipelineModel = new PipelineModel();
     private treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
-    private terminals = new Map<string,vscode.Terminal>();
+    private terminals = new TerminalCache();
 
     constructor() {
         this.pipelineViewer = vscode.window.createTreeView('extension.vsJenkinsXExplorer', { treeDataProvider: this.treeProvider });
@@ -520,17 +521,42 @@ export class PipelineExplorer {
     }
 }
 
-function runJXAsTerminal(terminals: Map<string,vscode.Terminal>, args: string[], terminalName: string): vscode.Terminal {
-    // TODO validate jx is on the $PATH and if not install it
-    const terminalOptions = {
-        name: terminalName,
-        env: process.env
-    };
-    let terminal = terminals.get(terminalName);
-    if (!terminal) {
-        terminal = vscode.window.createTerminal(terminalOptions);
-        terminals.set(terminalName, terminal);
+
+
+export class TerminalCache {
+    private terminals = new Map<string,vscode.Terminal>();
+
+    constructor() {
+        vscode.window.onDidCloseTerminal(terminal => {
+            const name = terminal.name;
+            let other = this.terminals.get(name);
+            if (other) {
+                console.log(`Detected closing terminal ${name}`);
+                this.terminals.delete(name);
+            }
+        });
     }
+    /** 
+     * Lazily creates a new terminal if one does not already exist
+     */
+    getOrCreate(terminalName: string): vscode.Terminal {
+        let terminal = this.terminals.get(terminalName);
+        if (!terminal) {
+            const terminalOptions = {
+                name: terminalName,
+                env: process.env
+            };
+            terminal = vscode.window.createTerminal(terminalOptions);
+            this.terminals.set(terminalName, terminal);
+        }
+    return terminal;
+    } 
+}
+
+
+function runJXAsTerminal(terminals: TerminalCache, args: string[], terminalName: string): vscode.Terminal {
+    // TODO validate jx is on the $PATH and if not install it
+    let terminal = terminals.getOrCreate(terminalName);
     terminal.sendText("jx " + args.join(" "));
     terminal.show();
     return terminal;
