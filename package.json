@@ -14,14 +14,19 @@
     ],
     "activationEvents": [
         "onView:extension.vsJenkinsXExplorer",
+<<<<<<< HEAD
         "onCommand:extension.watchActivity",
         "onCommand:vsJenkinsX.openDevPod"
+=======
+        "onCommand:NotifyPromote.Activity"
+>>>>>>> make a generic watch class we can reuse from different functions
     ],
     "main": "./out/extension",
     "icon": "images/jx-logo.png",
     "contributes": {
         "commands": [
             {
+<<<<<<< HEAD
                 "command": "extension.watchActivity",
                 "title": "Watch Activities",
                 "category": "Jenkins X"
@@ -30,6 +35,10 @@
                 "command": "vsJenkinsX.openDevPod",
                 "title": "Open DevPod Terminal",
                 "description": "Open a new DevPod terminal for building inside the kubernetes cluster",
+=======
+                "command": "NotifyPromote.Activity",
+                "title": "jx notify promotions",
+>>>>>>> make a generic watch class we can reuse from different functions
                 "category": "Jenkins X"
             },
             {
