@@ -83,13 +83,23 @@
                     "group": "1"
                 },
                 {
+                    "command": "PipelineExplorer.watchBuildLog",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
+                    "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.watchBuildLog",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
+                    "group": "1"
+                },
+                {
                     "command": "PipelineExplorer.openPipelineLogURL",
                     "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
                     "group": "2"
                 },
                 {
                     "command": "PipelineExplorer.openPipelineLogURL",
-                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
                     "group": "2"
                 },
                 {
