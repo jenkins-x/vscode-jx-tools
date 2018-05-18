@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 const k8s = require('@kubernetes/client-node');
 
 import { PipelineExplorer } from './PipelineExplorer';
+import { openDevPod } from './OpenDevPod';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -122,6 +123,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     // add the Tree viewer
     let subscriptions = new PipelineExplorer().subscribe(context);
+    
+    subscriptions.push(vscode.commands.registerCommand('vsJenkinsX.openDevPod', openDevPod));
+
     subscriptions.forEach((element) => {
         context.subscriptions.push(element);
     });
