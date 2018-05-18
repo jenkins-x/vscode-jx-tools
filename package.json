@@ -213,6 +213,7 @@
     },
     "dependencies": {
         "@kubernetes/client-node": "^0.3.0",
+        "moment": "2.13.0",
         "vsce": "^1.40.0"
     },
     "keywords": [

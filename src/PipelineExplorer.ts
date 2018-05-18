@@ -1,6 +1,8 @@
 import { EventEmitter, TreeItem, Event, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, ProviderResult, TreeView } from 'vscode';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as moment from 'moment';
+
 import { TreeDataProvider } from 'vscode';
 const k8s = require('@kubernetes/client-node');
 
@@ -46,7 +48,7 @@ export class StageNode implements ModelNode {
     get commandName(): string {
         /*
         // TODO wonder if we could only enable these commands if folks double click on the node rather than on selection?
-        
+
         switch (this.contextValue) {
             case "vsJenkinsX.pipelines.stage.app":
                 return "PipelineExplorer.openEnvironmentApplication";
@@ -78,7 +80,8 @@ export class StageNode implements ModelNode {
     }
 
     get tooltip(): string {
-        return this.name + " status: " + this.status;
+        let step = this.step || {};
+        return this.name + ": " + this.status + elapsedTime(" Duration: ", step.startedTimestamp, step.completedTimestamp);
     }
 
     get status(): string {
@@ -138,7 +141,8 @@ export class BuildNode implements ModelNode {
     }
 
     get tooltip(): string {
-        return "#" + this.buildNumber + " status: " + this.status;
+        let step = this.pipelineSpec;
+        return "#" + this.buildNumber + ": " + this.status + elapsedTime(" Duration: ", step.startedTimestamp, step.completedTimestamp);
     }
 
     get pipeline(): any {
@@ -837,6 +841,22 @@ function nodeForUri(uri: vscode.Uri, node: ModelNode): ModelNode | null {
 function stringCapitalise(text?: string): string {
     if (text) {
         return text.substring(0, 1).toUpperCase() + text.substring(1);
+    }
+    return "";
+}
+
+function elapsedTime(prefix: string, start?: string, completed?: string): string {
+    if (start && completed) {
+        let m1 = moment(start);
+        let m2 = moment(completed);
+
+        if (m1.isValid() && m2.isValid()) {
+            var duration = moment.duration(m1.diff(m2));
+            const answer = duration.humanize();
+            if (answer) {
+                return prefix + answer;
+            }
+        }
     }
     return "";
 }
