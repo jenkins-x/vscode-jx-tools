@@ -14,22 +14,21 @@
     ],
     "activationEvents": [
         "onView:extension.vsJenkinsXExplorer",
-        "onCommand:extension.watchActivity",
-        "onCommand:vsJenkinsX.openDevPod"
+        "onCommand:vsJenkinsX.openDevPod",
+        "onCommand:NotifyPromote.Activity"
     ],
     "main": "./out/extension",
     "icon": "images/jx-logo.png",
     "contributes": {
         "commands": [
             {
-                "command": "extension.watchActivity",
-                "title": "Watch Activities",
-                "category": "Jenkins X"
-            },
-            {
                 "command": "vsJenkinsX.openDevPod",
                 "title": "Open DevPod Terminal",
-                "description": "Open a new DevPod terminal for building inside the kubernetes cluster",
+                "description": "Open a new DevPod terminal for building inside the kubernetes cluster"
+            },
+            {
+                "command": "NotifyPromote.Activity",
+                "title": "jx notify promotions",
                 "category": "Jenkins X"
             },
             {
@@ -220,7 +219,7 @@
     },
     "dependencies": {
         "@kubernetes/client-node": "^0.3.0",
-        "moment": "2.13.0",
+        "moment": "2.19.3",
         "vsce": "^1.40.0"
     },
     "keywords": [
