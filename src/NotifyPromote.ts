@@ -4,16 +4,15 @@ import { KubeWatcher, CallbackKind } from './KubeWatcher';
 export class NotifyPromote {
 
 
-    constructor() {
+    constructor(private kubeWatcher: KubeWatcher) {
     }
 
-    subscribe() {
-        return vscode.commands.registerCommand('NotifyPromote.Activity', () => this.promoteCallback())
+    subscribe(): vscode.Disposable {
+        return vscode.commands.registerCommand('NotifyPromote.Activity', () => this.promoteCallback());
     }
 
     promoteCallback() {
-        let kw = new KubeWatcher();
-        kw.addCallback((kind: CallbackKind, obj: any): void => {
+        this.kubeWatcher.addCallback((kind: CallbackKind, obj: any): void => {
             let repoName = obj.metadata.name;
             if (!obj.spec.steps) {
                 return;

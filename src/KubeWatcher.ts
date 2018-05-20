@@ -1,6 +1,6 @@
 const k8s = require('@kubernetes/client-node');
 
-export enum CallbackKind { ADD, UPDATE, DELETE };
+export enum CallbackKind { ADD, UPDATE, DELETE }
 
 export type WatchCallback = (kind: CallbackKind, event: any) => void;
 
@@ -34,13 +34,13 @@ export class KubeWatcher {
                 // callback is called for each received object.
                 (type: any, obj: any) => {
                     if (type === 'ADDED') {
-                        this.notify(CallbackKind.ADD, obj)
+                        this.notify(CallbackKind.ADD, obj);
 
                     } else if (type === 'MODIFIED') {
-                        this.notify(CallbackKind.UPDATE, obj)
+                        this.notify(CallbackKind.UPDATE, obj);
 
                     } else if (type === 'DELETED') {
-                        this.notify(CallbackKind.DELETE, obj)
+                        this.notify(CallbackKind.DELETE, obj);
 
                     } else {
                         throw new Error("unrecognised CallbackKind: " + type);
@@ -59,7 +59,7 @@ export class KubeWatcher {
     disconnect() {
         if (!this.connected) {
             this.connected = false;
-            this.req.abort()
+            this.req.abort();
         }
     }
 
