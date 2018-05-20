@@ -3,7 +3,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-import { PipelineExplorer } from './PipelineExplorer';
+import { PipelineExplorer, TerminalCache } from './PipelineExplorer';
 import { openDevPod } from './OpenDevPod';
 import { NotifyPromote } from './NotifyPromote';
 
@@ -21,10 +21,12 @@ export function activate(context: vscode.ExtensionContext) {
     let disposableActivity = new NotifyPromote().subscribe();
     context.subscriptions.push(disposableActivity);
 
+    const terminals = new TerminalCache();
+
     // add the Tree viewer
-    let subscriptions = new PipelineExplorer().subscribe(context);
+    let subscriptions = new PipelineExplorer(terminals).subscribe(context);
     
-    subscriptions.push(vscode.commands.registerCommand('vsJenkinsX.openDevPod', openDevPod));
+    subscriptions.push(vscode.commands.registerCommand('vsJenkinsX.openDevPod', resource => openDevPod(terminals)));
 
     subscriptions.forEach((element) => {
         context.subscriptions.push(element);

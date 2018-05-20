@@ -615,9 +615,8 @@ export class PipelineExplorer {
     private pipelineViewer: TreeView<ModelNode>;
     private pipelineModel = new PipelineModel();
     private treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
-    private terminals = new TerminalCache();
 
-    constructor() {
+    constructor(private terminals: TerminalCache) {
         this.pipelineViewer = vscode.window.createTreeView('extension.vsJenkinsXExplorer', { treeDataProvider: this.treeProvider });
     }
 
@@ -771,13 +770,21 @@ export class TerminalCache {
             }
         });
     }
+
+    /** 
+     * Returns the terminal of the given name
+     */
+    get(terminalName: string): vscode.Terminal | undefined {
+        return this.terminals.get(terminalName);
+    }
+
     /** 
      * Lazily creates a new terminal if one does not already exist
      */
-    getOrCreate(terminalName: string): vscode.Terminal {
+    getOrCreate(terminalName: string, options?: vscode.TerminalOptions): vscode.Terminal {
         let terminal = this.terminals.get(terminalName);
         if (!terminal) {
-            const terminalOptions = {
+            const terminalOptions = options || {
                 name: terminalName,
                 env: process.env
             };
