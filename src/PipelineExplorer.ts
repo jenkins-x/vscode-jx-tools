@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 
 import { TreeDataProvider } from 'vscode';
-const k8s = require('@kubernetes/client-node');
+import { KubeWatcher, CallbackKind } from './KubeWatcher';
 
 interface ModelNode {
     readonly resource: vscode.Uri;
@@ -489,64 +489,45 @@ export class PipelineModel implements ModelNode {
         }
     }
 
-    public connect() {
-        let kc = new k8s.KubeConfig();
-        let configFile = process.env['HOME'] + '/.kube/config';
-        try {
-            kc.loadFromFile(configFile);
-        } catch (e) {
-            console.log('error reading ' + configFile + ': ' + e.message);
-            throw e;
-        }
+    public connect(kubeWatcher: KubeWatcher) {
+        kubeWatcher.addCallback((kind: CallbackKind, obj: any) => {
+            let name = obj.metadata.name;
+            let spec = obj.spec;
 
-        let watch = new k8s.Watch(kc);
-        watch.watch('/apis/jenkins.io/v1/namespaces/jx/pipelineactivities',
-            // optional query parameters can go here.
-            // TODO filter on labels once we add them to Activities
-            {},
-            // callback is called for each received object.
-            (type: any, obj: any) => {
-                let name = obj.metadata.name;
-                let spec = obj.spec;
+            if (!name || !spec) {
+                return;
+            }
 
-                if (!name || !spec) {
-                    return;
-                }
-
-                let buildNumber = spec.build;
-                if (!buildNumber) {
-                    console.log("missing build number: " + buildNumber + " for name: " + name);
-                    return;
-                }
-                let folder = spec.gitOwner;
-                let repoName = spec.gitRepository;
-                if (!folder || !repoName) {
-                    let pipeline = spec.pipeline;
-                    if (pipeline) {
-                        let values = pipeline.split("/");
-                        if (values && values.length > 2) {
-                            folder = values[0];
-                            repoName = values[1];
-                        }
+            let buildNumber = spec.build;
+            if (!buildNumber) {
+                console.log("missing build number: " + buildNumber + " for name: " + name);
+                return;
+            }
+            let folder = spec.gitOwner;
+            let repoName = spec.gitRepository;
+            if (!folder || !repoName) {
+                let pipeline = spec.pipeline;
+                if (pipeline) {
+                    let values = pipeline.split("/");
+                    if (values && values.length > 2) {
+                        folder = values[0];
+                        repoName = values[1];
                     }
                 }
-                if (!folder || !repoName) {
-                    console.log("missing data for pipeline folder: " + folder + " repo: " + repoName + " build: " + buildNumber);
-                    return;
-                }
+            }
+            if (!folder || !repoName) {
+                console.log("missing data for pipeline folder: " + folder + " repo: " + repoName + " build: " + buildNumber);
+                return;
+            }
 
-                if (type === 'ADDED' || type === 'MODIFIED') {
-                    this.upsertPipeline(folder, repoName, buildNumber, obj);
-                    this.fireChangeEvent();
-                } else if (type === 'DELETED') {
-                    this.deletePipeline(folder, repoName, buildNumber, obj);
-                    this.fireChangeEvent();
-                }
-            },
-            // done callback is called if the watch terminates normally
-            (err: any) => {
-                console.log(`Jenkins X Pipeline watcher got error callback ${err}`);
-            });
+            if (kind === CallbackKind.ADD || kind === CallbackKind.UPDATE) {
+                this.upsertPipeline(folder, repoName, buildNumber, obj);
+                this.fireChangeEvent();
+            } else if (kind === CallbackKind.DELETE) {
+                this.deletePipeline(folder, repoName, buildNumber, obj);
+                this.fireChangeEvent();
+            }
+        });
     }
 
     fireChangeEvent() {
@@ -616,12 +597,12 @@ export class PipelineExplorer {
     private pipelineModel = new PipelineModel();
     private treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
 
-    constructor(private terminals: TerminalCache) {
+    constructor(private terminals: TerminalCache, private kubeWatcher: KubeWatcher) {
         this.pipelineViewer = vscode.window.createTreeView('extension.vsJenkinsXExplorer', { treeDataProvider: this.treeProvider });
     }
 
     subscribe(context: vscode.ExtensionContext) {
-        this.pipelineModel.connect();
+        this.pipelineModel.connect(this.kubeWatcher);
 
 
         return [

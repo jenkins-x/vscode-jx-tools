@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { PipelineExplorer, TerminalCache } from './PipelineExplorer';
 import { openDevPod } from './OpenDevPod';
 import { NotifyPromote } from './NotifyPromote';
+import { KubeWatcher } from './KubeWatcher';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -15,18 +16,14 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "vscode-jx-tools" is now active!');
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposableActivity = new NotifyPromote().subscribe();
-    context.subscriptions.push(disposableActivity);
-
+    const kubeWatcher = new KubeWatcher();
     const terminals = new TerminalCache();
 
     // add the Tree viewer
-    let subscriptions = new PipelineExplorer(terminals).subscribe(context);
+    let subscriptions = new PipelineExplorer(terminals, kubeWatcher).subscribe(context);
     
     subscriptions.push(vscode.commands.registerCommand('vsJenkinsX.openDevPod', resource => openDevPod(terminals)));
+    subscriptions.push(new NotifyPromote(kubeWatcher).subscribe());
 
     subscriptions.forEach((element) => {
         context.subscriptions.push(element);
