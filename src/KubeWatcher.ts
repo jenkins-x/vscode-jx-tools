@@ -25,33 +25,48 @@ export class KubeWatcher {
                 console.log('error reading ' + configFile + ': ' + e.message);
                 throw e;
             }
+            
             //let resourceVersion = 0
             let watch = new k8s.Watch(kc);
-            this.req = watch.watch('/apis/jenkins.io/v1/namespaces/jx/pipelineactivities',
-                // optional query parameters can go here.
-                // TODO filter on labels once we add them to Activities
-                {},
-                // callback is called for each received object.
-                (type: any, obj: any) => {
-                    if (type === 'ADDED') {
-                        this.notify(CallbackKind.ADD, obj);
 
-                    } else if (type === 'MODIFIED') {
-                        this.notify(CallbackKind.UPDATE, obj);
+            // optional query parameters can go here.
+            // TODO filter on labels once we add them to Activities
+            const queryParameters = {};
 
-                    } else if (type === 'DELETED') {
-                        this.notify(CallbackKind.DELETE, obj);
-
-                    } else {
-                        throw new Error("unrecognised CallbackKind: " + type);
-                    }
-                },
-                // done callback is called if the watch terminates normally
-                (err: any) => {
-                    if (err) {
-                        console.log(err);
-                    }
+            // callback is called for each received object.
+            const callback = (type: any, obj: any) => {
+                if (type === 'ADDED') {
+                    this.notify(CallbackKind.ADD, obj);
                 }
+                else if (type === 'MODIFIED') {
+                    this.notify(CallbackKind.UPDATE, obj);
+                }
+                else if (type === 'DELETED') {
+                    this.notify(CallbackKind.DELETE, obj);
+                }
+                else {
+                    throw new Error("unrecognised CallbackKind: " + type);
+                }
+            };
+
+            // done callback is called if the watch terminates normally
+            const errorHandler = (err: any) => {
+                if (err) {
+                    console.log(err);
+                }
+                console.log("Reconnecting watcher");
+
+                this.req = watch.watch('/apis/jenkins.io/v1/namespaces/jx/pipelineactivities',
+                    queryParameters,
+                    callback,
+                    errorHandler
+                );
+            };
+
+            this.req = watch.watch('/apis/jenkins.io/v1/namespaces/jx/pipelineactivities',
+                {},
+                callback,
+                errorHandler
             );
         }
     }

@@ -161,6 +161,7 @@ export class BuildNode implements ModelNode {
                 if (step) {
                     var subStep = step;
                     let stage = step.stage;
+                    let preview = step.preview;
                     let promote = step.promote;
                     var name = "";
                     if (stage) {
@@ -168,7 +169,18 @@ export class BuildNode implements ModelNode {
                         name = stage.name;
                         this._children.push(new StageNode(addChildUrl(this.resource, name), this, name, this.pipeline, subStep, "vsJenkinsX.pipelines.stage", ""));
                     }
-                    if (promote) {
+                    if (preview) {
+                        let prUrl = preview.pullRequestURL;
+                        let appUrl = preview.applicationURL;
+                        if (prUrl) {
+                            this._children.push(new StageNode(addChildUrl(this.resource, name), this, "Pull Request", this.pipeline, preview, "vsJenkinsX.pipelines.stage.pullRequest", prUrl));
+                        }
+                        if (appUrl) {
+                            this._children.push(new StageNode(addChildUrl(this.resource, name), this, "Preview Application", this.pipeline, preview, "vsJenkinsX.pipelines.stage.preview", appUrl));
+                        } else {
+                            this._children.push(new StageNode(addChildUrl(this.resource, name), this, "Preview Application building", this.pipeline, preview, "vsJenkinsX.pipelines.stage.stage", ""));
+                        }
+                    } else if (promote) {
                         subStep = promote;
                         let envName: string = stringCapitalise(promote.environment);
                         name = "Promote to " + envName + "";
