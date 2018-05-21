@@ -12,13 +12,15 @@ export interface ModelNode {
     readonly title: string;
     readonly contextValue: string;
     readonly tooltip: string;
-    readonly iconPath: string;
+    readonly iconPath: string | { light: string; dark: string };
     readonly commandName: string;
 
     getChildren(): ModelNode[];
 
     parent(): ModelNode;
 }
+
+
 
 export class StageNode implements ModelNode {
     constructor(public resource: vscode.Uri, public build: BuildNode, public name: string, readonly pipeline: any, readonly step: any, readonly contextValue: string, readonly url?: string) {
@@ -60,33 +62,33 @@ export class StageNode implements ModelNode {
         return "";
     }
 
-    get iconPath(): string {
-        switch (this.status) {
-            case "Succeeded":
-                return "images/atomist_build_passed.png";
-            case "Failed":
-            case "Error":
-                return "images/atomist_build_failed.png";
-            case "Running":
-                return "images/spinner.gif";
-            case "Aborted":
-                return "images/circle-64.png";
-            case "NotExecuted":
-                // TODO
-                return "";
-        }
-        return "";
+    get iconPath(): string | { light: string; dark: string } {
+    switch (this.status) {
+        case "Succeeded":
+            return "images/atomist_build_passed.png";
+        case "Failed":
+        case "Error":
+            return "images/atomist_build_failed.png";
+        case "Running":
+            return "images/spinner.gif";
+        case "Aborted":
+            return "images/circle-64.png";
+        case "NotExecuted":
+            // TODO
+            return "";
     }
+    return "";
+}
 
-    get tooltip(): string {
-        let step = this.step || {};
-        return this.name + ": " + this.status + elapsedTime(" Duration: ", step.startedTimestamp, step.completedTimestamp);
-    }
+get tooltip(): string {
+    let step = this.step || {};
+    return this.name + ": " + this.status + elapsedTime(" Duration: ", step.startedTimestamp, step.completedTimestamp);
+}
 
-    get status(): string {
-        let step = this.step || {};
-        return step.status || "Unknown";
-    }
+get status(): string {
+    let step = this.step || {};
+    return step.status || "Unknown";
+}
 
 }
 
@@ -124,7 +126,7 @@ export class BuildNode implements ModelNode {
         return "";
     }
 
-    get iconPath(): string {
+    get iconPath(): string | { light: string; dark: string } {
         switch (this.status) {
             case "Succeeded":
                 return "images/atomist_build_passed.png";
@@ -300,8 +302,11 @@ export class BranchNode implements ModelNode {
         return "";
     }
 
-    get iconPath(): string {
-        return "images/github.png";
+    get iconPath(): string | { light: string; dark: string } {
+        if (isPullRequestBranch(this.branchName)) {
+            return lightDarkIcon("git-pull-request.png");
+        }
+        return lightDarkIcon("git-branch.png");
     }
 
     get contextValue(): string {
@@ -354,6 +359,7 @@ export class BranchNode implements ModelNode {
 
 }
 
+
 export class PullRequestsNode implements ModelNode {
     private nodes: Map<string, BranchNode> = new Map<string, BranchNode>();
 
@@ -384,8 +390,8 @@ export class PullRequestsNode implements ModelNode {
         return "";
     }
 
-    get iconPath(): string {
-        return "images/github.png";
+    get iconPath(): string | { light: string; dark: string } {
+        return lightDarkIcon("git-pull-request.png");
     }
 
     get contextValue(): string {
@@ -474,8 +480,8 @@ export class RepoNode implements ModelNode {
         return "";
     }
 
-    get iconPath(): string {
-        return "images/github.png";
+    get iconPath(): string | { light: string; dark: string } {
+        return lightDarkIcon("octoface.png");
     }
 
     get contextValue(): string {
@@ -519,13 +525,13 @@ export class RepoNode implements ModelNode {
             if (isPullRequestBranch(branchName)) {
                 this.pullRequests.upsertPipeline(branchName, buildNumber, pipeline);
             } else {
-            let branch = this.nodes.get(branchName);
-            if (!branch) {
-                branch = new BranchNode(addChildUrl(this.resource, branchName), this, this, branchName);
-                this.nodes.set(branchName, branch);
+                let branch = this.nodes.get(branchName);
+                if (!branch) {
+                    branch = new BranchNode(addChildUrl(this.resource, branchName), this, this, branchName);
+                    this.nodes.set(branchName, branch);
+                }
+                branch.upsertPipeline(buildNumber, pipeline);
             }
-            branch.upsertPipeline(buildNumber, pipeline);
-        }
         }
     }
 
@@ -534,30 +540,16 @@ export class RepoNode implements ModelNode {
             if (isPullRequestBranch(branchName)) {
                 this.pullRequests.deletePipeline(branchName, buildNumber, pipeline);
             } else {
-            let branch = this.nodes.get(branchName);
-            if (branch) {
-                branch.deletePipeline(buildNumber, pipeline);
-                if (branch.isEmpty) {
-                    this.nodes.delete(branchName);
+                let branch = this.nodes.get(branchName);
+                if (branch) {
+                    branch.deletePipeline(buildNumber, pipeline);
+                    if (branch.isEmpty) {
+                        this.nodes.delete(branchName);
+                    }
                 }
             }
         }
-        }
     }
-}
-
-/**
- * Returns whether or not the given branch name is a Pull Request or not
- * 
- * @param branchName the name of the branch
- */
-function isPullRequestBranch(branchName: string): boolean {
-    return branchName.toUpperCase().startsWith("PR-");
-}
-
-/** Returns a relative URI */
-function addChildUrl(uri: vscode.Uri, path: string): vscode.Uri {
-    return uri.with({ path: uri.path + "/" + path });
 }
 
 export class OwnerNode implements ModelNode {
@@ -590,7 +582,7 @@ export class OwnerNode implements ModelNode {
         return "";
     }
 
-    get iconPath(): string {
+    get iconPath(): string | { light: string; dark: string } {
         return "";
     }
 
@@ -665,7 +657,7 @@ export class PipelineModel implements ModelNode {
         return "";
     }
 
-    get iconPath(): string {
+    get iconPath(): string | { light: string; dark: string } {
         return "";
     }
 
@@ -777,8 +769,18 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
         };
         let iconPath = element.iconPath;
         if (iconPath) {
-            answer.iconPath = vscode.Uri.file(path.join(__dirname, "../" + iconPath));
-            //console.log("__dirname is " + __dirname + " for " + iconPath + " so using " + answer.iconPath);
+            if (typeof iconPath === "string") {
+                answer.iconPath = iconPathToURI(iconPath as string);
+            } else {
+                const light = iconPath.light;
+                const dark = iconPath.dark;
+                if (light || dark) {
+                    answer.iconPath = {
+                        light: iconPathToURI(light),
+                        dark: iconPathToURI(dark)
+                    };
+                }
+            }
         }
         const commandName = element.commandName;
         if (commandName) {
@@ -803,6 +805,19 @@ export class PipelineTreeDataProvider implements TreeDataProvider<ModelNode>, Te
         return this.model.getContent(uri).then(content => content);
     }
 }
+
+function iconPathToURI(iconPath: string): vscode.Uri {
+    //console.log("__dirname is " + __dirname + " for " + iconPath + " so using " + answer.iconPath);
+    return vscode.Uri.file(path.join(__dirname, "../" + iconPath));
+}
+
+function lightDarkIcon(fileName: string): { light: string; dark: string } {
+    return {
+        light: "images/" + fileName ,
+        dark: "images/dark-" + fileName
+    };
+}
+
 
 function stringCapitalise(text?: string): string {
     if (text) {
@@ -841,4 +856,18 @@ function mapValuesInKeyOrder(nodes: Map<string, ModelNode>): ModelNode[] {
         }
     });
     return answer;
+}
+
+/**
+ * Returns whether or not the given branch name is a Pull Request or not
+ * 
+ * @param branchName the name of the branch
+ */
+function isPullRequestBranch(branchName: string): boolean {
+    return branchName.toUpperCase().startsWith("PR-");
+}
+
+/** Returns a relative URI */
+function addChildUrl(uri: vscode.Uri, path: string): vscode.Uri {
+    return uri.with({ path: uri.path + "/" + path });
 }
