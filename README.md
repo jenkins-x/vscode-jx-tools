@@ -8,8 +8,8 @@ By opening the `Jenkins X` explorer in the UI you can browse folders, repositori
 
 ![usage](https://raw.githubusercontent.com/jenkins-x/vscode-jx-tools/master/images/explorer.png)
 
-### Features
 
+### Features
 * browse all the pipelines in your team with real time updates as release or pull request pipelines start/stop.
 * open pipeline build logs inside the VS Code Terminal
 * browse the Jenkins pipeline page, git repository, build logs or applications easily
