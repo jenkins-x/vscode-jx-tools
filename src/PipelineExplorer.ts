@@ -30,6 +30,7 @@ export class PipelineExplorer {
             vscode.commands.registerCommand('PipelineExplorer.stopPipeline', resource => this.stopPipeline(resource)),
             vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
             vscode.commands.registerCommand('PipelineExplorer.openEnvironmentApplication', resource => this.openStageNodeUrl(resource)),
+            vscode.commands.registerCommand('PipelineExplorer.openPreviewApplication', resource => this.openStageNodeUrl(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPullRequest', resource => this.openStageNodeUrl(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openUpdate', resource => this.openStageNodeUrl(resource)),
         ];

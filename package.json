@@ -62,9 +62,15 @@
                 "category": "Jenkins X"
             },
             {
+                "command": "PipelineExplorer.openPreviewApplication",
+                "title": "Open Preview Application",
+                "description": "Open the preview application for this Pull Request",
+                "category": "Jenkins X"
+            },
+            {
                 "command": "PipelineExplorer.openPullRequest",
-                "title": "Open Promote Pull Request",
-                "description": "Open the promotion pull request for this step",
+                "title": "Open Pull Request",
+                "description": "Open the pull request for this step",
                 "category": "Jenkins X"
             },
             {
@@ -124,6 +130,11 @@
                 {
                     "command": "PipelineExplorer.openPullRequest",
                     "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.stage.pullRequest",
+                    "group": "1"
+                },
+                {
+                    "command": "PipelineExplorer.openPreviewApplication",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.stage.preview",
                     "group": "1"
                 },
                 {
