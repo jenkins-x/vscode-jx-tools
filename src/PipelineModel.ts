@@ -95,7 +95,7 @@ export class BuildNode implements ModelNode {
     private _pipeline: any = null;
     private _children: StageNode[] = [];
 
-    constructor(public resource: vscode.Uri, public repo: RepoNode, public buildNumber: string) {
+    constructor(public resource: vscode.Uri, public branch: BranchNode, public buildNumber: string) {
     }
 
     getChildren(): ModelNode[] {
@@ -105,7 +105,7 @@ export class BuildNode implements ModelNode {
     }
 
     parent(): ModelNode {
-        return this.repo;
+        return this.branch;
     }
 
     get isDirectory(): boolean {
@@ -258,11 +258,184 @@ export class BuildNode implements ModelNode {
     }
 }
 
-
-export class RepoNode implements ModelNode {
+export class BranchNode implements ModelNode {
     private nodes: Map<string, BuildNode> = new Map<string, BuildNode>();
 
+    constructor(public resource: vscode.Uri, public repo: RepoNode, public parentNode: ModelNode, public branchName: string) {
+    }
+
+    isEmpty(): boolean {
+        return this.nodes.size === 0;
+    }
+
+    get isDirectory(): boolean {
+        return true;
+    }
+
+    get title(): string {
+        return "Branch";
+    }
+
+    get label(): string {
+        return this.branchName;
+    }
+
+    get tooltip(): string {
+        return this.repo.tooltip + " branch: " + this.branchName;
+    }
+
+    get commandName(): string {
+        return "";
+    }
+
+    get iconPath(): string {
+        return "images/github.png";
+    }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.branch";
+    }
+
+    get pipelineName(): string {
+        return this.repo.owner.folder + "/" + this.repo.repoName + "/" + this.branchName;
+    }
+
+    getChildren(): ModelNode[] {
+        let answer: BuildNode[] = [];
+        this.nodes.forEach((value: BuildNode, key: string) => {
+            answer.push(value);
+        });
+        answer.sort((n1, n2) => {
+            if (n1.buildNumber && !n2.buildNumber) {
+                return 1;
+            }
+
+            if (!n1.buildNumber && n2.buildNumber) {
+                return -1;
+            }
+            return +n2.buildNumber - (+n1.buildNumber);
+        });
+        return answer;
+    }
+
+    parent(): ModelNode {
+        return this.parentNode;
+    }
+
+
+    upsertPipeline(buildNumber: string, pipeline: any) {
+        if (buildNumber) {
+            let build = this.nodes.get(buildNumber);
+            if (!build) {
+                build = new BuildNode(addChildUrl(this.resource, buildNumber), this, buildNumber);
+                this.nodes.set(buildNumber, build);
+            }
+            build.pipeline = pipeline;
+        }
+    }
+
+    deletePipeline(buildNumber: string, pipeline: any) {
+        if (buildNumber) {
+            this.nodes.delete(buildNumber);
+        }
+    }
+
+}
+
+export class PullRequestsNode implements ModelNode {
+    private nodes: Map<string, BranchNode> = new Map<string, BranchNode>();
+
+    constructor(public resource: vscode.Uri, public repo: RepoNode) {
+    }
+
+    isEmpty(): boolean {
+        return this.nodes.size === 0;
+    }
+
+    get isDirectory(): boolean {
+        return true;
+    }
+
+    get title(): string {
+        return "Pull Requests";
+    }
+
+    get label(): string {
+        return "pull requests";
+    }
+
+    get tooltip(): string {
+        return "Pull Requests on Repository " + this.repo.owner.folder + "/" + this.repo.repoName;
+    }
+
+    get commandName(): string {
+        return "";
+    }
+
+    get iconPath(): string {
+        return "images/github.png";
+    }
+
+    get contextValue(): string {
+        return "vsJenkinsX.pipelines.pullRequests";
+    }
+
+    parent(): ModelNode {
+        return this.repo;
+    }
+
+    getChildren(): ModelNode[] {
+        let answer: BranchNode[] = [];
+        this.nodes.forEach((value: BranchNode, key: string) => {
+            answer.push(value);
+        });
+        /*
+        answer.sort((n1, n2) => {
+            if (n1.buildNumber && !n2.buildNumber) {
+                return 1;
+            }
+
+            if (!n1.buildNumber && n2.buildNumber) {
+                return -1;
+            }
+            return +n2.buildNumber - (+n1.buildNumber);
+        });
+        */
+        answer.sort();
+        return answer;
+    }
+
+
+    upsertPipeline(branchName: string, buildNumber: string, pipeline: any) {
+        if (branchName) {
+            let branch = this.nodes.get(branchName);
+            if (!branch) {
+                branch = new BranchNode(addChildUrl(this.resource, branchName), this.repo, this, branchName);
+                this.nodes.set(branchName, branch);
+            }
+            branch.upsertPipeline(buildNumber, pipeline);
+        }
+    }
+
+    deletePipeline(branchName: string, buildNumber: string, pipeline: any) {
+        if (branchName) {
+            let branch = this.nodes.get(branchName);
+            if (branch) {
+                branch.deletePipeline(buildNumber, pipeline);
+                if (branch.isEmpty) {
+                    this.nodes.delete(branchName);
+                }
+            }
+        }
+    }
+}
+
+export class RepoNode implements ModelNode {
+    private nodes: Map<string, BranchNode> = new Map<string, BranchNode>();
+    private pullRequests: PullRequestsNode;
+
     constructor(public resource: vscode.Uri, public owner: OwnerNode, public repoName: string) {
+        this.pullRequests = new PullRequestsNode(addChildUrl(this.resource, "pullRequests"), this);
     }
 
     isEmpty(): boolean {
@@ -306,10 +479,11 @@ export class RepoNode implements ModelNode {
     }
 
     getChildren(): ModelNode[] {
-        let answer: BuildNode[] = [];
-        this.nodes.forEach((value: BuildNode, key: string) => {
+        let answer: ModelNode[] = [];
+        this.nodes.forEach((value: BranchNode, key: string) => {
             answer.push(value);
         });
+        /*
         answer.sort((n1, n2) => {
             if (n1.buildNumber && !n2.buildNumber) {
                 return 1;
@@ -320,27 +494,53 @@ export class RepoNode implements ModelNode {
             }
             return +n2.buildNumber - (+n1.buildNumber);
         });
+        */
+        answer.sort();
+        if (!this.pullRequests.isEmpty()) {
+            answer.push(this.pullRequests);
+        }
         return answer;
     }
 
-
-    upsertPipeline(buildNumber: string, pipeline: any) {
-        if (buildNumber) {
-            var build = this.nodes.get(buildNumber);
-            if (!build) {
-                build = new BuildNode(addChildUrl(this.resource, buildNumber), this, buildNumber);
-                this.nodes.set(buildNumber, build);
+    upsertPipeline(branchName: string, buildNumber: string, pipeline: any) {
+        if (branchName) {
+            if (isPullRequestBranch(branchName)) {
+                this.pullRequests.upsertPipeline(branchName, buildNumber, pipeline);
+            } else {
+            let branch = this.nodes.get(branchName);
+            if (!branch) {
+                branch = new BranchNode(addChildUrl(this.resource, branchName), this, this, branchName);
+                this.nodes.set(branchName, branch);
             }
-            build.pipeline = pipeline;
+            branch.upsertPipeline(buildNumber, pipeline);
+        }
         }
     }
 
-    deletePipeline(buildNumber: string, pipeline: any) {
-        if (buildNumber) {
-            this.nodes.delete(buildNumber);
+    deletePipeline(branchName: string, buildNumber: string, pipeline: any) {
+        if (branchName) {
+            if (isPullRequestBranch(branchName)) {
+                this.pullRequests.deletePipeline(branchName, buildNumber, pipeline);
+            } else {
+            let branch = this.nodes.get(branchName);
+            if (branch) {
+                branch.deletePipeline(buildNumber, pipeline);
+                if (branch.isEmpty) {
+                    this.nodes.delete(branchName);
+                }
+            }
+        }
         }
     }
+}
 
+/**
+ * Returns whether or not the given branch name is a Pull Request or not
+ * 
+ * @param branchName the name of the branch
+ */
+function isPullRequestBranch(branchName: string): boolean {
+    return branchName.toUpperCase().startsWith("PR-");
 }
 
 /** Returns a relative URI */
@@ -394,22 +594,22 @@ export class OwnerNode implements ModelNode {
         return mapValuesInKeyOrder(this.nodes);
     }
 
-    upsertPipeline(repoName: string, buildNumber: string, pipeline: any) {
+    upsertPipeline(repoName: string, branchName: string, buildNumber: string, pipeline: any) {
         if (repoName) {
             var repo = this.nodes.get(repoName);
             if (!repo) {
                 repo = new RepoNode(addChildUrl(this.resource, repoName), this, repoName);
                 this.nodes.set(repoName, repo);
             }
-            repo.upsertPipeline(buildNumber, pipeline);
+            repo.upsertPipeline(branchName, buildNumber, pipeline);
         }
     }
 
-    deletePipeline(repoName: string, buildNumber: string, pipeline: any) {
+    deletePipeline(repoName: string, branchName: string, buildNumber: string, pipeline: any) {
         if (repoName) {
             var repo = this.nodes.get(repoName);
             if (repo) {
-                repo.deletePipeline(buildNumber, pipeline);
+                repo.deletePipeline(branchName, buildNumber, pipeline);
             }
         }
     }
@@ -465,22 +665,22 @@ export class PipelineModel implements ModelNode {
         return element ? element.getChildren() : this.getChildren();
     }
 
-    upsertPipeline(folder: string, repoName: string, buildNumber: string, pipeline: any) {
+    upsertPipeline(folder: string, repoName: string, branchName: string, buildNumber: string, pipeline: any) {
         if (folder) {
             var owner = this.nodes.get(folder);
             if (!owner) {
                 owner = new OwnerNode(addChildUrl(this.resource, folder), this, folder);
                 this.nodes.set(folder, owner);
             }
-            owner.upsertPipeline(repoName, buildNumber, pipeline);
+            owner.upsertPipeline(repoName, branchName, buildNumber, pipeline);
         }
     }
 
-    deletePipeline(folder: string, repoName: string, buildNumber: string, pipeline: any) {
+    deletePipeline(folder: string, repoName: string, branchName: string, buildNumber: string, pipeline: any) {
         if (folder) {
             var owner = this.nodes.get(folder);
             if (owner) {
-                owner.deletePipeline(repoName, buildNumber, pipeline);
+                owner.deletePipeline(repoName, branchName, buildNumber, pipeline);
                 if (owner.isEmpty()) {
                     this.nodes.delete(folder);
                 }
@@ -504,26 +704,27 @@ export class PipelineModel implements ModelNode {
             }
             let folder = spec.gitOwner;
             let repoName = spec.gitRepository;
-            if (!folder || !repoName) {
-                let pipeline = spec.pipeline;
-                if (pipeline) {
-                    let values = pipeline.split("/");
-                    if (values && values.length > 2) {
-                        folder = values[0] || folder;
-                        repoName = values[1] || repoName;
-                    }
+            let pipeline = spec.pipeline;
+            let branchName = "";
+            if (pipeline) {
+                let values = pipeline.split("/");
+                if (values && values.length > 2) {
+                    folder = folder || values[0];
+                    repoName = repoName || values[1];
+                    branchName = values[2];
                 }
             }
-            if (!folder || !repoName) {
-                console.log(`missing data for pipeline ${name} folder: ${folder} repo: ${repoName} build: ${buildNumber}`);
+
+            if (!folder || !repoName || !branchName) {
+                console.log(`missing data for pipeline ${name} folder: ${folder} repo: ${repoName} branchName: ${branchName} build: ${buildNumber}`);
                 return;
             }
 
             if (kind === CallbackKind.ADD || kind === CallbackKind.UPDATE) {
-                this.upsertPipeline(folder, repoName, buildNumber, obj);
+                this.upsertPipeline(folder, repoName, branchName, buildNumber, obj);
                 this.fireChangeEvent();
             } else if (kind === CallbackKind.DELETE) {
-                this.deletePipeline(folder, repoName, buildNumber, obj);
+                this.deletePipeline(folder, repoName, branchName, buildNumber, obj);
                 this.fireChangeEvent();
             }
         });
