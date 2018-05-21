@@ -510,13 +510,13 @@ export class PipelineModel implements ModelNode {
                 if (pipeline) {
                     let values = pipeline.split("/");
                     if (values && values.length > 2) {
-                        folder = values[0];
-                        repoName = values[1];
+                        folder = values[0] || folder;
+                        repoName = values[1] || repoName;
                     }
                 }
             }
             if (!folder || !repoName) {
-                console.log("missing data for pipeline folder: " + folder + " repo: " + repoName + " build: " + buildNumber);
+                console.log(`missing data for pipeline ${name} folder: ${folder} repo: ${repoName} build: ${buildNumber}`);
                 return;
             }
 
@@ -803,7 +803,19 @@ function mapValuesInKeyOrder(nodes: Map<string, ModelNode>): ModelNode[] {
 
 function openUrl(u?: string): void {
     if (u) {
-        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(u));
+        // lets try preserve the actual URI path
+        // as the parse method breaks blue ocean paths using %2F
+        let uri = vscode.Uri.parse(u);
+        const host = uri.authority;
+        if (host) {
+            const idx = u.indexOf(host);
+            if (idx > 0) {
+                const path = u.substring(idx + host.length);
+                console.log(`Found path: ${path} when URI has path ${uri.path}`);
+                uri = uri.with({path: path});
+            }
+        }
+        vscode.commands.executeCommand('vscode.open', uri);
     }
 }
 
