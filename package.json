@@ -153,7 +153,7 @@
                 },
                 {
                     "command": "PipelineExplorer.openPipelineResource",
-                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls.Running",
+                    "when": "view == extension.vsJenkinsXExplorer && viewItem == vsJenkinsX.pipelines.build.hasUrls",
                     "group": "3"
                 },
                 {
