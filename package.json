@@ -24,11 +24,12 @@
             {
                 "command": "vsJenkinsX.openDevPod",
                 "title": "Open DevPod Terminal",
-                "description": "Open a new DevPod terminal for building inside the kubernetes cluster"
+                "description": "Open a new DevPod terminal for building inside the kubernetes cluster",
+                "category": "Jenkins X"
             },
             {
                 "command": "NotifyPromote.Activity",
-                "title": "jx notify promotions",
+                "title": "Notify Promotions",
                 "category": "Jenkins X"
             },
             {
@@ -90,6 +91,14 @@
                 "title": "Stop Pipeline",
                 "description": "Terminates the current pipeline build",
                 "category": "Jenkins X"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "PipelineExplorer.watchBuildLog",
+                "key": "ctrl+shift+l",
+                "mac": "alt+cmd+l",
+                "when": "view == extension.vsJenkinsXExplorer"
             }
         ],
         "views": {
@@ -200,6 +209,10 @@
             ],
             "commandPalette": [
                 {
+                    "command": "PipelineExplorer.watchBuildLog",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
                     "command": "PipelineExplorer.openPipelineResource",
                     "when": "view == extension.vsJenkinsXExplorer"
                 },
@@ -209,6 +222,30 @@
                 },
                 {
                     "command": "PipelineExplorer.openPipelineLogURL",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.openEnvironmentApplication",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.openPreviewApplication",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.openPullRequest",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.openUpdate",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.startPipeline",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "PipelineExplorer.stopPipeline",
                     "when": "view == extension.vsJenkinsXExplorer"
                 }
             ]
