@@ -1,7 +1,7 @@
 import { TreeView } from 'vscode';
 import * as vscode from 'vscode';
 
-import { KubeWatcher } from './KubeWatcher';
+import { KubeWatcher } from './kube/watcher';
 import { PipelineModel, PipelineTreeDataProvider, ModelNode, StageNode, BuildNode, RepoNode } from './PipelineModel';
 
 export class PipelineExplorer {
@@ -9,13 +9,12 @@ export class PipelineExplorer {
     private pipelineModel = new PipelineModel();
     private treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
 
-    constructor(private terminals: TerminalCache, private kubeWatcher: KubeWatcher) {
+    constructor(private pipelines: KubeWatcher, private terminals: TerminalCache) {
         this.pipelineViewer = vscode.window.createTreeView('extension.vsJenkinsXExplorer', { treeDataProvider: this.treeProvider });
     }
 
     subscribe(context: vscode.ExtensionContext) {
-        this.pipelineModel.connect(this.kubeWatcher);
-
+        this.pipelineModel.connect(this.pipelines);
 
         return [
             vscode.workspace.registerTextDocumentContentProvider('pipeline', this.treeProvider),
