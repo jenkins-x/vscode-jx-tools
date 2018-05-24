@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { KubeWatcher, CallbackKind } from './KubeWatcher';
+import { KubeWatcher } from './kube/watcher';
 
 export class NotifyPromote {
 
 
-    constructor(private kubeWatcher: KubeWatcher) {
+    constructor(private pipelinesWatcher: KubeWatcher) {
     }
 
     subscribe(): vscode.Disposable {
@@ -12,7 +12,7 @@ export class NotifyPromote {
     }
 
     promoteCallback() {
-        this.kubeWatcher.addCallback((kind: CallbackKind, obj: any): void => {
+        this.pipelinesWatcher.addCallback((kind, obj): void => {
             let repoName = obj.metadata.name;
             if (!obj.spec.steps) {
                 return;

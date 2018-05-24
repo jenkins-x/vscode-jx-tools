@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 
 import { EventEmitter, TreeItem, Event, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, ProviderResult, TreeDataProvider } from 'vscode';
-import { KubeWatcher, CallbackKind } from './KubeWatcher';
+import { KubeWatcher, KubeCallbackKind } from './kube';
 
 export interface ModelNode {
     readonly resource: vscode.Uri;
@@ -693,25 +693,29 @@ export class PipelineModel implements ModelNode {
     }
 
     public connect(kubeWatcher: KubeWatcher) {
-        kubeWatcher.addCallback((kind: CallbackKind, obj: any) => {
-            let name = obj.metadata.name;
-            let spec = obj.spec;
+        kubeWatcher.addCallback((kind, event) => {
+            const name = event.metadata.name;
+            const spec = event.spec;
 
             if (!name || !spec) {
                 return;
             }
 
-            let buildNumber = spec.build;
+            const buildNumber = spec.build;
+
             if (!buildNumber) {
                 console.log("missing build number: " + buildNumber + " for name: " + name);
                 return;
             }
+
             let folder = spec.gitOwner;
             let repoName = spec.gitRepository;
             let pipeline = spec.pipeline;
             let branchName = "";
+
             if (pipeline) {
                 let values = pipeline.split("/");
+
                 if (values && values.length > 2) {
                     folder = folder || values[0];
                     repoName = repoName || values[1];
@@ -724,20 +728,17 @@ export class PipelineModel implements ModelNode {
                 return;
             }
 
-            if (kind === CallbackKind.ADD || kind === CallbackKind.UPDATE) {
-                this.upsertPipeline(folder, repoName, branchName, buildNumber, obj);
-                this.fireChangeEvent();
-            } else if (kind === CallbackKind.DELETE) {
-                this.deletePipeline(folder, repoName, branchName, buildNumber, obj);
-                this.fireChangeEvent();
-            }
+            (kind === KubeCallbackKind.DELETE) ?
+                this.deletePipeline(folder, repoName, branchName, buildNumber, event) :
+                this.upsertPipeline(folder, repoName, branchName, buildNumber, event);
+
+            this.fireChangeEvent();
         });
     }
 
     fireChangeEvent() {
         this._onDidChangeTreeData.fire();
     }
-
 
     public getContent(resource: Uri): Thenable<string> {
         return new Promise((c, e) => {
