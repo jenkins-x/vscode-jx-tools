@@ -1,7 +1,8 @@
 import { TreeView } from 'vscode';
 import * as vscode from 'vscode';
 
-import { KubeWatcher } from './kube/watcher';
+import { KubeWatcher } from './kube';
+import { TerminalCache, executeInTerminal } from './term';
 import { PipelineModel, PipelineTreeDataProvider, ModelNode, StageNode, BuildNode, RepoNode } from './PipelineModel';
 
 export class PipelineExplorer {
@@ -92,7 +93,7 @@ export class PipelineExplorer {
                         if (buildNumber) {
                             args.push("--build", buildNumber);
                         }
-                        runJXAsTerminal(this.terminals, args, terminalName);
+                        executeInTerminal(this.terminals, args, terminalName);
                     }
                 }
             }
@@ -105,7 +106,7 @@ export class PipelineExplorer {
             if (pipelineName) {
                 let terminalName = "Jenkins X";
                 let args = ["start", "pipeline", pipelineName];
-                runJXAsTerminal(this.terminals, args, terminalName);
+                executeInTerminal(this.terminals, args, terminalName);
             }
         }
     }
@@ -122,7 +123,7 @@ export class PipelineExplorer {
                         if (buildNumber) {
                             let terminalName = "Jenkins X";
                             let args = ["stop", "pipeline", pipelineName, "--build", buildNumber];
-                            runJXAsTerminal(this.terminals, args, terminalName);
+                            executeInTerminal(this.terminals, args, terminalName);
                         }
                     }
                 }
@@ -147,56 +148,6 @@ export class PipelineExplorer {
         return null;
     }
 }
-
-
-
-export class TerminalCache {
-    private terminals = new Map<string, vscode.Terminal>();
-
-    constructor() {
-        vscode.window.onDidCloseTerminal(terminal => {
-            const name = terminal.name;
-            let other = this.terminals.get(name);
-            if (other) {
-                console.log(`Detected closing terminal ${name}`);
-                this.terminals.delete(name);
-            }
-        });
-    }
-
-    /** 
-     * Returns the terminal of the given name
-     */
-    get(terminalName: string): vscode.Terminal | undefined {
-        return this.terminals.get(terminalName);
-    }
-
-    /** 
-     * Lazily creates a new terminal if one does not already exist
-     */
-    getOrCreate(terminalName: string, options?: vscode.TerminalOptions): vscode.Terminal {
-        let terminal = this.terminals.get(terminalName);
-        if (!terminal) {
-            const terminalOptions = options || {
-                name: terminalName,
-                env: process.env
-            };
-            terminal = vscode.window.createTerminal(terminalOptions);
-            this.terminals.set(terminalName, terminal);
-        }
-        return terminal;
-    }
-}
-
-
-function runJXAsTerminal(terminals: TerminalCache, args: string[], terminalName: string): vscode.Terminal {
-    // TODO validate jx is on the $PATH and if not install it
-    let terminal = terminals.getOrCreate(terminalName);
-    terminal.sendText("jx " + args.join(" "));
-    terminal.show();
-    return terminal;
-}
-
 
 function openUrl(u?: string): void {
     if (u) {
