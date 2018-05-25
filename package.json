@@ -28,6 +28,20 @@
                 "category": "Jenkins X"
             },
             {
+                "command": "vsJenkinsX.createQuickstart",
+                "title": "Create new app from Quickstart",
+                "description": "Create a new app from a Quickstart and import the generated code into git and Jenkins for CI/CD",
+                "category": "Jenkins X"
+            },
+			{
+				"command": "PipelineExplorer.refresh",
+				"title": "Refresh",
+				"icon": {
+					"light": "images/refresh.svg",
+					"dark": "images/dark/refresh.svg"
+				}
+			},
+            {
                 "command": "NotifyPromote.Activity",
                 "title": "Notify Promotions",
                 "category": "Jenkins X"
@@ -110,6 +124,17 @@
             ]
         },
         "menus": {
+            "view/title": [
+				{
+					"command": "PipelineExplorer.refresh",
+					"when": "view == extension.vsJenkinsXExplorer",
+					"group": "navigation"
+                },
+                {
+                    "command": "vsJenkinsX.createQuickstart",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                }
+            ],
             "view/item/context": [
                 {
                     "command": "PipelineExplorer.watchBuildLog",

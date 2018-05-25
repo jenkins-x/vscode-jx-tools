@@ -815,7 +815,7 @@ function iconPathToURI(iconPath: string): vscode.Uri {
 function lightDarkIcon(fileName: string): { light: string; dark: string } {
     return {
         light: "images/" + fileName ,
-        dark: "images/dark-" + fileName
+        dark: "images/dark/" + fileName
     };
 }
 
