@@ -2,7 +2,7 @@
     "name": "vscode-jx-tools",
     "displayName": "jx-tools",
     "description": "Jenkins X extension for Visual Studio Code",
-    "version": "0.0.5",
+    "version": "0.0.33",
     "license": "Apache-2.0",
     "publisher": "jenkinsxio",
     "preview": true,
