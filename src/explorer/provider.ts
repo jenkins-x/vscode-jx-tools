@@ -14,7 +14,7 @@ class ExplorerTreeDataProvider implements TreeDataProvider<ExplorerModel> {
     }
 
 	public getTreeItem(element: ExplorerModel): TreeItem {
-        if (element.contextValue.indexOf(ExplorerContext.Previews) !== -1) {
+        if (element.contextValue.indexOf(ExplorerContext.Pipelines) !== -1) {
             return this.pipelineProvider.getTreeItem(element);
         }
 
@@ -25,14 +25,14 @@ class ExplorerTreeDataProvider implements TreeDataProvider<ExplorerModel> {
         if (!element) {
             return [
                 // new ExplorerModel('Environments', ExplorerContext.Environments),
-                new ExplorerModel('Previews', ExplorerContext.Previews)
+                new ExplorerModel('Pipelines', ExplorerContext.Pipelines)
             ];
         }
 
-        if (element.contextValue === ExplorerContext.Previews) {
+        if (element.contextValue === ExplorerContext.Pipelines) {
             return this.pipelineProvider.getChildren();
         }
-        if (element.contextValue.indexOf(ExplorerContext.Previews) !== -1) {
+        if (element.contextValue.indexOf(ExplorerContext.Pipelines) !== -1) {
             return this.pipelineProvider.getChildren(element);
         }
 

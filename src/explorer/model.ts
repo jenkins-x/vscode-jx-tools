@@ -2,7 +2,7 @@ import { Uri } from 'vscode';
 import { ModelNode } from './pipelines';
 
 enum ExplorerContext {
-    Previews = 'vsJenkinsX.pipelines',
+    Pipelines = 'vsJenkinsX.pipelines',
     Environments = 'vsJenkinsX.enviroments'
 }
 
