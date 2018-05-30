@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TerminalCache } from './term';
+import { TerminalCache } from '../term';
 
 export function openDevPod(terminals: TerminalCache) {
     console.log("Opening DevPod");
