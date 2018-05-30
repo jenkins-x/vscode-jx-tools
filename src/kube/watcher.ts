@@ -1,5 +1,5 @@
 import * as k8s from '@kubernetes/client-node';
-import config from './config';
+import config from '../config';
 
 export type KubeWatchCallback = (kind: KubeCallbackKind, event: any) => void;
 
@@ -13,9 +13,9 @@ export enum KubeCallbackKind {
 const kubeConfig = new k8s.KubeConfig();
 
 try {
-    kubeConfig.loadFromFile(config.kubeFile);
+    kubeConfig.loadFromFile(config.kube.kubeFile);
 } catch (e) {
-    console.error(`error reading ${config.kubeFile}: ${e.message}`);
+    console.error(`error reading ${config.kube.kubeFile}: ${e.message}`);
     throw e;
 }
 
@@ -44,7 +44,7 @@ export class KubeWatcher {
 
             const execute = () => {
                 this.request = watcher.watch(
-                    config.namespace + this.crd, {}, callback, errorHandler
+                    config.kube.namespace + this.crd, {}, callback, errorHandler
                 );
             };
 

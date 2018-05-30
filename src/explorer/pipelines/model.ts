@@ -3,7 +3,8 @@ import * as path from 'path';
 import * as moment from 'moment';
 
 import { EventEmitter, TreeItem, Event, TreeItemCollapsibleState, Uri, TextDocumentContentProvider, CancellationToken, ProviderResult, TreeDataProvider } from 'vscode';
-import { KubeWatcher, KubeCallbackKind } from './kube';
+import { KubeWatcher, KubeCallbackKind } from '../../kube';
+import { getImagePath, Theme } from '../../config';
 
 export interface ModelNode {
     readonly resource: vscode.Uri;
@@ -65,14 +66,14 @@ export class StageNode implements ModelNode {
     get iconPath(): string | { light: string; dark: string } {
     switch (this.status) {
         case "Succeeded":
-            return "images/atomist_build_passed.png";
+            return getImagePath("atomist_build_passed.png");
         case "Failed":
         case "Error":
-            return "images/atomist_build_failed.png";
+            return getImagePath("atomist_build_failed.png");
         case "Running":
-            return "images/spinner.gif";
+            return getImagePath("spinner.gif");
         case "Aborted":
-            return "images/circle-64.png";
+            return getImagePath("circle-64.png");
         case "NotExecuted":
             // TODO
             return "";
@@ -129,14 +130,14 @@ export class BuildNode implements ModelNode {
     get iconPath(): string | { light: string; dark: string } {
         switch (this.status) {
             case "Succeeded":
-                return "images/atomist_build_passed.png";
+                return getImagePath("atomist_build_passed.png");
             case "Failed":
             case "Error":
-                return "images/atomist_build_failed.png";
+                return getImagePath("atomist_build_failed.png");
             case "Running":
-                return "images/spinner.gif";
+                return getImagePath("spinner.gif");
             case "Aborted":
-                return "images/circle-64.png";
+                return getImagePath("circle-64.png");
         }
         return "";
     }
@@ -814,8 +815,8 @@ function iconPathToURI(iconPath: string): vscode.Uri {
 
 function lightDarkIcon(fileName: string): { light: string; dark: string } {
     return {
-        light: "images/" + fileName ,
-        dark: "images/dark/" + fileName
+        light: getImagePath(fileName, Theme.LIGHT) ,
+        dark: getImagePath(fileName, Theme.DARK)
     };
 }
 

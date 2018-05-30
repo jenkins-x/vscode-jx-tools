@@ -1,20 +1,21 @@
-import { TreeView } from 'vscode';
 import * as vscode from 'vscode';
-
-import { KubeWatcher } from './kube';
-import { TerminalCache, executeInTerminal } from './term';
-import { PipelineModel, PipelineTreeDataProvider, ModelNode, StageNode, BuildNode, RepoNode } from './PipelineModel';
+import { KubeWatcher } from '../../kube';
+import { TerminalCache, executeInTerminal } from '../../term';
+import {
+    PipelineModel,
+    PipelineTreeDataProvider,
+    StageNode,
+    BuildNode,
+    RepoNode
+} from './model';
 
 export class PipelineExplorer {
-    private pipelineViewer: TreeView<ModelNode>;
     private pipelineModel = new PipelineModel();
-    private treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
+    public treeProvider = new PipelineTreeDataProvider(this.pipelineModel);
 
-    constructor(private pipelines: KubeWatcher, private terminals: TerminalCache) {
-        this.pipelineViewer = vscode.window.createTreeView('extension.vsJenkinsXExplorer', { treeDataProvider: this.treeProvider });
-    }
+    constructor(private pipelines: KubeWatcher, private terminals: TerminalCache) {}
 
-    subscribe(context: vscode.ExtensionContext) {
+    subscribe() {
         this.pipelineModel.connect(this.pipelines);
 
         return [
@@ -28,7 +29,6 @@ export class PipelineExplorer {
             vscode.commands.registerCommand('PipelineExplorer.watchBuildLog', resource => this.watchBuildLog(resource)),
             vscode.commands.registerCommand('PipelineExplorer.startPipeline', resource => this.startPipeline(resource)),
             vscode.commands.registerCommand('PipelineExplorer.stopPipeline', resource => this.stopPipeline(resource)),
-            vscode.commands.registerCommand('PipelineExplorer.revealResource', () => this.reveal()),
             vscode.commands.registerCommand('PipelineExplorer.openEnvironmentApplication', resource => this.openStageNodeUrl(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPreviewApplication', resource => this.openStageNodeUrl(resource)),
             vscode.commands.registerCommand('PipelineExplorer.openPullRequest', resource => this.openStageNodeUrl(resource)),
@@ -130,23 +130,6 @@ export class PipelineExplorer {
             }
         }
     }
-
-    private reveal(): void {
-        const node = this.getNode();
-        if (node) {
-            this.pipelineViewer.reveal(node);
-        }
-    }
-
-    private getNode(): ModelNode | null {
-        if (vscode.window.activeTextEditor) {
-            const uri = vscode.window.activeTextEditor.document.uri;
-            if (uri.scheme === 'pipeline') {
-                return nodeForUri(uri, this.pipelineModel);
-            }
-        }
-        return null;
-    }
 }
 
 function openUrl(u?: string): void {
@@ -166,65 +149,3 @@ function openUrl(u?: string): void {
         vscode.commands.executeCommand('vscode.open', uri);
     }
 }
-
-/*
- * Returns the node for the given URI
- */
-function nodeForUri(uri: vscode.Uri, node: ModelNode): ModelNode | null {
-    if (!node) {
-        return null;
-    }
-    if (node.resource === uri) {
-        return node;
-    }
-    for (let child of node.getChildren()) {
-        let answer = nodeForUri(uri, child);
-        if (answer) {
-            return answer;
-        }
-    }
-    return null;
-}
-
-
-
-    /*
-    if (await checkPresent(context, 'command')) {
-        const term = context.host.createTerminal(terminalName, path(context), command);
-        term.show();
-    }
-    */
-
-/*
-type CheckPresentMessageMode = 'command' | 'activation' | 'silent';
-
-
-interface Context {
-    readonly host: Host;
-    readonly fs: FS;
-    readonly shell: Shell;
-    readonly installDependenciesCallback: () => void;
-    binFound: boolean;
-    binPath: string;
-}
-
-async function checkPresent(context: Context, errorMessageMode: CheckPresentMessageMode): Promise<boolean> {
-    if (context.binFound) {
-        return true;
-    }
-
-    return await checkForJXInternal(context, errorMessageMode);
-}
-
-async function checkForJXInternal(context: Context, errorMessageMode: CheckPresentMessageMode): Promise<boolean> {
-    const binName = 'jx';
-    const bin = context.host.getConfiguration('vs-kubernetes')[`vs-jx.${binName}-path`];
-
-    const contextMessage = getCheckKubectlContextMessage(errorMessageMode);
-    const inferFailedMessage = 'Could not find "jx" binary.' + contextMessage;
-    const configuredFileMissingMessage = bin + ' does not exist!' + contextMessage;
-
-    return await binutil.checkForBinary(context, bin, binName, inferFailedMessage, configuredFileMissingMessage, errorMessageMode !== 'silent');
-}
-*/
-
