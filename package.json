@@ -33,14 +33,14 @@
                 "description": "Create a new app from a Quickstart and import the generated code into git and Jenkins for CI/CD",
                 "category": "Jenkins X"
             },
-			{
-				"command": "PipelineExplorer.refresh",
-				"title": "Refresh",
-				"icon": {
-					"light": "images/refresh.svg",
-					"dark": "images/dark/refresh.svg"
-				}
-			},
+            {
+                "command": "PipelineExplorer.refresh",
+                "title": "Refresh",
+                "icon": {
+                    "light": "images/refresh.svg",
+                    "dark": "images/dark/refresh.svg"
+                }
+            },
             {
                 "command": "NotifyPromote.Activity",
                 "title": "Notify Promotions",
@@ -125,10 +125,10 @@
         },
         "menus": {
             "view/title": [
-				{
-					"command": "PipelineExplorer.refresh",
-					"when": "view == extension.vsJenkinsXExplorer",
-					"group": "navigation"
+                {
+                    "command": "PipelineExplorer.refresh",
+                    "when": "view == extension.vsJenkinsXExplorer",
+                    "group": "navigation"
                 },
                 {
                     "command": "vsJenkinsX.createQuickstart",
@@ -303,6 +303,6 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git://github.com/jenkins-x/vscode-jx-tools.git"
+        "url": "https://github.com/jenkins-x/vscode-jx-tools.git"
     }
 }
