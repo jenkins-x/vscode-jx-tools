@@ -33,14 +33,14 @@
                 "description": "Create a new app from a Quickstart and import the generated code into git and Jenkins for CI/CD",
                 "category": "Jenkins X"
             },
-			{
-				"command": "PipelineExplorer.refresh",
-				"title": "Refresh",
-				"icon": {
-					"light": "images/refresh.svg",
-					"dark": "images/dark/refresh.svg"
-				}
-			},
+            {
+                "command": "PipelineExplorer.refresh",
+                "title": "Refresh",
+                "icon": {
+                    "light": "images/refresh.svg",
+                    "dark": "images/dark/refresh.svg"
+                }
+            },
             {
                 "command": "NotifyPromote.Activity",
                 "title": "Notify Promotions",
@@ -125,10 +125,10 @@
         },
         "menus": {
             "view/title": [
-				{
-					"command": "PipelineExplorer.refresh",
-					"when": "view == extension.vsJenkinsXExplorer",
-					"group": "navigation"
+                {
+                    "command": "PipelineExplorer.refresh",
+                    "when": "view == extension.vsJenkinsXExplorer",
+                    "group": "navigation"
                 },
                 {
                     "command": "vsJenkinsX.createQuickstart",
@@ -284,11 +284,11 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "devDependencies": {
-        "typescript": "^2.6.1",
-        "vscode": "^1.1.6",
-        "tslint": "^5.8.0",
+        "@types/mocha": "^2.2.42",
         "@types/node": "^7.0.43",
-        "@types/mocha": "^2.2.42"
+        "tslint": "^5.8.0",
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.21"
     },
     "dependencies": {
         "@kubernetes/client-node": "^0.3.0",
@@ -303,6 +303,6 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git://github.com/jenkins-x/vscode-jx-tools.git"
+        "url": "https://github.com/jenkins-x/vscode-jx-tools.git"
     }
 }
