@@ -24,6 +24,13 @@ export function openDevPod(terminals: TerminalCache) {
     const argsSync = ['sync']
     executeInTerminal(terminals, argsSync, 'jx sync', true)
 
-    const argsDevpod = ['create', 'devpod', '--reuse', '--sync']
+    let jxConfig  = vscode.workspace.getConfiguration("jx", 
+        vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri : null)
+    let ports = jxConfig['devPodPorts'].join(',')
+
+    var  argsDevpod = ['create', 'devpod', '--reuse', '--sync']
+    if (ports !== null && ports !== '') {
+        argsDevpod.push(`--ports=${ports}`)
+    }
     executeInTerminal(terminals, argsDevpod, 'DevPod: ' + name)
 }
