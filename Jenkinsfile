@@ -32,6 +32,7 @@ pipeline {
             // ensure we're not on a detached head
             sh "git checkout master"
             sh "git config --global credential.helper store"
+            sh "jx step git credentials"
 
             sh "jx step next-version --filename package.json --tag"
             sh "/usr/bin/Xvfb :99 -screen 0 1280x1024x24 &"
