@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TerminalCache } from '../term';
+import { TerminalCache, executeInTerminal } from '../term';
 
 export function openDevPod(terminals: TerminalCache) {
     console.log("Opening DevPod");
@@ -21,27 +21,9 @@ export function openDevPod(terminals: TerminalCache) {
     }
     console.log(`found workspace folder ${path}`);
 
-    const jxSyncTerminalName = "jx sync";
-    let jxSyncTerminal = terminals.get(jxSyncTerminalName);
-    if (!jxSyncTerminal) {
-        const terminalOptions = {
-            name: jxSyncTerminalName,
-            cwd: path,
-            shellPath: "jx",
-            shellArgs: ["sync", "--watch-only"],
-            env: process.env
-        };
-        jxSyncTerminal = terminals.getOrCreate(jxSyncTerminalName, terminalOptions);
-        jxSyncTerminal.show(true);
-    }
+    const argsSync = ['sync']
+    executeInTerminal(terminals, argsSync, 'jx sync', true)
 
-    const terminalOptions = {
-        name: "DevPod: " + name,
-        cwd: path,
-        shellPath: "jx",
-        shellArgs: ["create", "devpod", "--reuse", "--sync"],
-        env: process.env
-    };
-    let terminal = vscode.window.createTerminal(terminalOptions);
-    terminal.show();
+    const argsDevpod = ['create', 'devpod', '--reuse', '--sync']
+    executeInTerminal(terminals, argsDevpod, 'DevPod: ' + name)
 }
