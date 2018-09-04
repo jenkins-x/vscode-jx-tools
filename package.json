@@ -276,6 +276,17 @@
             ]
         }
     },
+    "configuration": {
+      "type": "object",
+      "title": "jx configuration",
+      "properties": {
+        "jx.devPodPorts": {
+          "type": "number",
+          "default": [8080],
+          "description": "Container ports exposed by DevPod"
+        }
+      }
+    },
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
