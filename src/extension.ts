@@ -4,7 +4,7 @@
 import { ExtensionContext, commands } from 'vscode';
 import { KubeWatcher, KubeCrd } from './kube';
 import { TerminalCache } from './term';
-import { createQuickstart, openDevPod, notifyPromote } from './command';
+import { createCamel, createQuickstart, createSpring, openDevPod, notifyPromote } from './command';
 import { createExplorerView } from './explorer';
 
 // this method is called when your extension is activated
@@ -19,6 +19,8 @@ export function activate(context: ExtensionContext) {
         ...createExplorerView(pipelines, terminals),
         commands.registerCommand('vsJenkinsX.openDevPod', _ => openDevPod(terminals)),
         commands.registerCommand('vsJenkinsX.createQuickstart', _ => createQuickstart(terminals)),
+        commands.registerCommand('vsJenkinsX.createSpring', _ => createSpring(terminals)),
+        commands.registerCommand('vsJenkinsX.createCamel', _ => createCamel(terminals)),
         commands.registerCommand('NotifyPromote.Activity', _ => notifyPromote(pipelines))
     ];
 

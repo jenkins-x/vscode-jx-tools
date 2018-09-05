@@ -29,8 +29,20 @@
             },
             {
                 "command": "vsJenkinsX.createQuickstart",
-                "title": "Create new app from Quickstart",
-                "description": "Create a new app from a Quickstart and import the generated code into git and Jenkins for CI/CD",
+                "title": "Create new Quickstart application",
+                "description": "Create a new application from a Quickstart and import the generated code into git and Jenkins for CI/CD",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "vsJenkinsX.createSpring",
+                "title": "Create new Spring Boot microservice",
+                "description": "Create a new microservice using Spring Boot via the Spring Boot Initalizr and import the generated code into git and Jenkins for CI/CD",
+                "category": "Jenkins X"
+            },
+            {
+                "command": "vsJenkinsX.createCamel",
+                "title": "Create new Apache Camel integration",
+                "description": "Create a new integration via Apache Camel and import the generated code into git and Jenkins for CI/CD",
                 "category": "Jenkins X"
             },
             {
@@ -132,6 +144,14 @@
                 },
                 {
                     "command": "vsJenkinsX.createQuickstart",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "vsJenkinsX.createSpring",
+                    "when": "view == extension.vsJenkinsXExplorer"
+                },
+                {
+                    "command": "vsJenkinsX.createCamel",
                     "when": "view == extension.vsJenkinsXExplorer"
                 }
             ],
