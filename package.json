@@ -282,7 +282,7 @@
         "properties": {
             "jx.path": {
                 "type": "string",
-                "default": "/usr/local/bin",
+                "default": "",
                 "description": "Path of the jx binary"
             },
             "jx.devPodPorts": {
