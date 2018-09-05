@@ -277,15 +277,22 @@
         }
     },
     "configuration": {
-      "type": "object",
-      "title": "jx configuration",
-      "properties": {
-        "jx.devPodPorts": {
-          "type": "number",
-          "default": [8080],
-          "description": "Container ports exposed by DevPod"
+        "type": "object",
+        "title": "jx configuration",
+        "properties": {
+            "jx.path": {
+                "type": "string",
+                "default": "",
+                "description": "Path of the jx binary"
+            },
+            "jx.devPodPorts": {
+                "type": "number",
+                "default": [
+                    8080
+                ],
+                "description": "Container ports exposed by DevPod"
+            }
         }
-      }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
@@ -303,6 +310,7 @@
     },
     "dependencies": {
         "@kubernetes/client-node": "^0.3.0",
+        "command-exists": "^1.2.7",
         "moment": "2.19.3",
         "vsce": "^1.40.0"
     },

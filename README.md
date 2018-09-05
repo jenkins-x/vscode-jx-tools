@@ -2,6 +2,20 @@
 
 A collection of VSCode tools to help working with Jenkins X
 
+## Settings 
+
+The following settings can be configured in the workspace:
+
+Defines a custom path for `jx` binary
+```json
+"jx.path": "/my/path/" 
+```
+
+Specifies which container ports will be exposed by the `DevPod`
+```json
+"jx.devPodPorts": [8080]
+```
+
 ## Jenkins X Explorer
 
 By opening the `Jenkins X` explorer in the UI you can browse folders, repositories, branches, pipelines and build logs:
