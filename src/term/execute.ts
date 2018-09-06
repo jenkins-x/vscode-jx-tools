@@ -6,7 +6,7 @@ import { TerminalCache } from './cache';
 function executeInTerminal(terminals: TerminalCache, args: string[], terminalName: string, 
     preserveFocus?: boolean): Terminal {
     const terminal = terminals.getOrCreate(terminalName);
-    const binary = getBinary()
+    const binary = getBinary();
      if (binary == '') {
         return terminal;
     }
@@ -37,13 +37,13 @@ function getBinary(): string {
             return "";
         }
     }
-    return binary
+    return binary;
 }
 
 function executeInTerminalChained(terminals: TerminalCache, args: string[][], terminalName: 
     string, preserveFocus?: boolean): Terminal {
     const terminal = terminals.getOrCreate(terminalName);
-    const binary = getBinary()
+    const binary = getBinary();
      if (binary == '') {
         return terminal;
     }
@@ -51,16 +51,16 @@ function executeInTerminalChained(terminals: TerminalCache, args: string[][], te
     for (let arg of args) {
         let command = `${binary} ${arg.join(' ')}`;
         if (commands != '') {
-            commands = commands + ' && ' + command
+            commands = commands + ' && ' + command;
         } else {
-            commands = command
+            commands = command;
         }
     }
     terminal.sendText(commands)
     if (preserveFocus) {
         terminal.show(preserveFocus);
     } else {
-        terminal.show()
+        terminal.show();
     }
     return terminal;
 }
