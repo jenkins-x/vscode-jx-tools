@@ -22,10 +22,13 @@ function executeInTerminal(terminals: TerminalCache, args: string[], terminalNam
 function getBinary(): string {
     let jxConfig  = vscode.workspace.getConfiguration("jx", 
         vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri : null);
-    let jxPath = jxConfig['path'];
+    var jxPath = '';
+    if (jxConfig) {
+        jxPath = jxConfig['path'];
+    }
     var binary = 'jx';
     var exists = require('command-exists');
-    if (jxPath !== null && jxPath != '') {
+    if (jxPath !== null && jxPath !== '' && typeof jxPath !== 'undefined') {
         binary = path.join(jxPath, binary);
         if (!exists.sync(binary)) {
             vscode.window.showErrorMessage('Failed to find the jx binary in your "jx.path" setting.');

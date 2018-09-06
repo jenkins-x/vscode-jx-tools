@@ -26,10 +26,16 @@ export function openDevPod(terminals: TerminalCache) {
 
     let jxConfig  = vscode.workspace.getConfiguration("jx", 
         vscode.window.activeTextEditor ? vscode.window.activeTextEditor.document.uri : null);
-    let ports = jxConfig['devPodPorts'].join(',');
+    var ports = '';
+    if (jxConfig) {
+        let portsValues = jxConfig['devPodPorts'];
+        if (portsValues !== null && typeof portsValues !== 'undefined'){
+            ports = portsValues.join(',');
+        }
+    }
 
     var  argsDevpod = ['create', 'devpod', '--reuse', '--sync'];
-    if (ports !== null && ports !== '') {
+    if (ports !== null && ports !== '' && typeof ports !== 'undefined') {
         argsDevpod.push(`--ports=${ports}`);
     }
     const argsRsh = ['rsh', '-d'];
