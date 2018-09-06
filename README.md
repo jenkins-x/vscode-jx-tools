@@ -36,3 +36,9 @@ By opening the `Jenkins X` explorer in the UI you can browse folders, repositori
 Activate the watch activities by opening up the VSCode palette `cmd` + `shift` + `p`, type `jx watch activities` and the extension command will be activated.
 
 ![usage](https://raw.githubusercontent.com/jenkins-x/vscode-jx-tools/master/images/usage.png)
+
+## Commands
+
+There are a number of commands available which can be invoked from VCode palette with `cmd` + `shift` + `p`.
+
+![commands](https://raw.githubusercontent.com/jenkins-x/vscode-jx-tools/master/images/commands.png)
