@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TerminalCache, executeInTerminal, executeInTerminalChained } from '../term';
+import { TerminalCache, executeInTerminal } from '../term';
 
 export function openDevPod(terminals: TerminalCache) {
     console.log("Opening DevPod");
@@ -38,6 +38,5 @@ export function openDevPod(terminals: TerminalCache) {
     if (ports !== null && ports !== '' && typeof ports !== 'undefined') {
         argsDevpod.push(`--ports=${ports}`);
     }
-    const argsRsh = ['rsh', '-d'];
-    executeInTerminalChained(terminals, [argsDevpod, argsRsh], 'DevPod: ' + name);
+    executeInTerminal(terminals, argsDevpod, 'DevPod: ' + name);
 }
