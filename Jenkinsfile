@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label "jenkins-nodejs"
-    }
+    agent any
     environment {
       VISUALSTUDIO_CREDS = credentials('jenkins-x-visualstudio')
     }
@@ -12,15 +10,13 @@ pipeline {
         }
         steps {
           
-          container('nodejs') {
-            sh "/usr/bin/Xvfb :99 -screen 0 1280x1024x24 &"
+          sh "/usr/bin/Xvfb :99 -screen 0 1280x1024x24 &"
 
-            sh "npm install"
-            sh "npm run postinstall"
-            sh "DISPLAY=:99 npm test"
+          sh "npm install"
+          sh "npm run postinstall"
+          sh "DISPLAY=:99 npm test"
 
-            sh "vsce package"
-          }
+          sh "vsce package"
         }
       }
       stage('Build Release') {
@@ -28,27 +24,20 @@ pipeline {
           branch 'master'
         }
         steps {
-          container('nodejs') {
-            // ensure we're not on a detached head
-            sh "git checkout master"
-            sh "git config --global credential.helper store"
-            sh "jx step git credentials"
+          // ensure we're not on a detached head
+          git "https://github.com/jenkins-x/vscode-jx-tools"
+          sh "git config --global credential.helper store"
+          sh "jx step git credentials"
 
-            sh "jx step next-version --filename package.json --tag"
-            sh "/usr/bin/Xvfb :99 -screen 0 1280x1024x24 &"
+          sh "jx step next-version --filename package.json --tag"
+          sh "/usr/bin/Xvfb :99 -screen 0 1280x1024x24 &"
 
-            sh "npm install"
-            sh "npm run postinstall"
-            sh "DISPLAY=:99 npm test"
+          sh "npm install"
+          sh "npm run postinstall"
+          sh "DISPLAY=:99 npm test"
 
-            sh "vsce publish -p $VISUALSTUDIO_CREDS_PSW"
-          }
+          sh "vsce publish -p $VISUALSTUDIO_CREDS_PSW"
         }
       }
-    }
-    post {
-        always {
-            cleanWs()
-        }
     }
   }
